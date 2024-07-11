@@ -36,5 +36,18 @@ function logDecoder(logFilePath) {
     };
   }
 
+  const functionLogger = (req, res, next) => {
+    if (req.route && req.route.stack) {
+      const routeHandler = req.route.stack.find(layer => layer.method);
+      if (routeHandler && routeHandler.method) {
+        console.log(`Calling function: ${routeHandler.method.name}`);
+      } else {
+        console.log('Calling function: unknown');
+      }
+    } else {
+      console.log('Calling function: no route stack');
+    }
+    next();
+  };
 
-module.exports = {logger, logDecoder};
+module.exports = {logger, logDecoder, functionLogger};

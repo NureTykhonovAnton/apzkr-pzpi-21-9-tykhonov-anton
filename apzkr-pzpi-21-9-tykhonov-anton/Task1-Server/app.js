@@ -5,7 +5,7 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-const { logger, logDecoder } = require('./middlewares/logger');
+const { logger, logDecoder, functionLogger } = require('./middlewares/logger');
 const backupDatabase = require('./config/backupper');
 
 // Controllers
@@ -29,10 +29,8 @@ const iotSettingsController = require('./controllers/iotSettings');
 // Middleware setup
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(logger);
-app.use(cors({
-  origin: 'http://localhost:3000'
-}));
+app.use(logger,functionLogger);
+app.use(cors())
 
 // API routes
 app.get('/', (req, res) => {
