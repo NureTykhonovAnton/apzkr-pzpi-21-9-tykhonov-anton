@@ -2,16 +2,15 @@ const express = require('express');
 require('dotenv').config();
 const mapsController = require('./controllers/mapsController');
 const cors = require('cors');
-
+const bodyParser = require('body-parser');
 const app = express();
-const port = 5001;
-
+const port = process.env.PORT;
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
-app.get('/geocode', mapsController.geocode);
-app.get('/route', mapsController.getRoute);
-app.post('/map', mapsController.getMapData);
+app.use('/api', mapsController);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

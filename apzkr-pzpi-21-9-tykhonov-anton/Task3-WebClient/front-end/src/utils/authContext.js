@@ -6,7 +6,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState(null);
+  const [role, setRole] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,9 +16,10 @@ export const AuthProvider = ({ children }) => {
         try {
           const userData = await fetchUserData(token);
           setRole(userData.role);
-          if (role.name.toLowerCase() == 'admin') {
+          const name=role.name
+          if (name.toLowerCase() == 'admin') {
             navigate('/admin-page');
-          } else if (role.name.toLowerCase() == 'user') {
+          } else if (name.toLowerCase() == 'user') {
             navigate('/user-page');
           } else {
             navigate('/');

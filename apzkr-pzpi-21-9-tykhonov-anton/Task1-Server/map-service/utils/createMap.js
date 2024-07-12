@@ -1,17 +1,17 @@
 require('dotenv').config();
-const apiKey = process.env.APIKEY;
 
-export default function createMap(longitude, latitude) {
-    var platform = new H.service.Platform({
+export default createMap = (longitude, latitude, apiKey, zoom) => { 
+  var platform = new H.service.Platform({
       apikey: apiKey
     });
+    
     var defaultLayers = platform.createDefaultLayers();
   
     // Step 2: initialize a map - this map is centered over the provided coordinates
     var map = new H.Map(document.getElementById('map'),
       defaultLayers.vector.normal.map, {
         center: { lat: latitude, lng: longitude },
-        zoom: 14,
+        zoom: zoom,
         pixelRatio: window.devicePixelRatio || 1
       });
   
