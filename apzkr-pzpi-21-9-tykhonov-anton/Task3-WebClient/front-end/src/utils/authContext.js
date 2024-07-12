@@ -17,9 +17,9 @@ export const AuthProvider = ({ children }) => {
           const userData = await fetchUserData(token);
           setRole(userData.role);
           const name=role.name
-          if (name.toLowerCase() == 'admin') {
+          if (name.toLowerCase(name) == 'admin') {
             navigate('/admin-page');
-          } else if (name.toLowerCase() == 'user') {
+          } else if (name.toLowerCase(name) == 'user') {
             navigate('/user-page');
           } else {
             navigate('/');

@@ -52,6 +52,25 @@ const MapComponent = ({ longitude, latitude }) => {
 
           const behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
           const ui = H.ui.UI.createDefault(map, defaultLayers);
+
+          const LocationOfMarker = { lat: latitude, lng: longitude };
+
+          // Path to the marker icon in the public directory
+          const markerIconPath = '../../public/marker_icon.png';
+          console.log('Marker icon path:', markerIconPath); // Debugging statement
+
+          // Create a marker icon from an image URL:
+          const icon = new H.map.Icon(markerIconPath);
+
+          // Create a marker using the previously instantiated icon:
+          const marker = new H.map.Marker(LocationOfMarker, { icon: icon });
+
+          // Add the marker to the map:
+          map.addObject(marker);
+          map.setCenter(LocationOfMarker);
+          map.setZoom(18);
+
+          console.log('Marker added:', marker); // Debugging statement
         } catch (error) {
           console.error('Error initializing map:', error);
         }
@@ -59,7 +78,7 @@ const MapComponent = ({ longitude, latitude }) => {
     };
 
     initializeMap();
-  }, [mapConfig]);
+  }, [mapConfig, latitude, longitude]);
 
   return (
     <div
