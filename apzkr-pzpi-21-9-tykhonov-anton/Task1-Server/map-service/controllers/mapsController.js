@@ -24,5 +24,8 @@ router.post('/point', async(req,res) =>{
   // Return the data as JSON
   return res.status(200).json(mapData);
 });
+// router.get('/icons', async(req,res)=>{
+  
+// })
 
 module.exports = router

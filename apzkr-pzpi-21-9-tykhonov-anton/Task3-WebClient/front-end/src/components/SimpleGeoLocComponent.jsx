@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import MapComponent from './MapComponent';
+
+
 const GeolocationComponent = () => {
     const [latitude, setLatitude] = useState(null);
     const [longitude, setLongitude] = useState(null);

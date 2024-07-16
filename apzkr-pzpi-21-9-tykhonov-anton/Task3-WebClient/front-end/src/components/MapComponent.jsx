@@ -4,6 +4,7 @@ import fetchMapData from '../api/mapRequests';
 
 const MapComponent = ({ longitude, latitude }) => {
   const [mapConfig, setMapConfig] = useState(null);
+  const [map, setMap] = useState(null);
 
   useEffect(() => {
     const fetchMapConfig = async () => {
@@ -18,6 +19,25 @@ const MapComponent = ({ longitude, latitude }) => {
 
     fetchMapConfig();
   }, [latitude, longitude]);
+
+  const setUpClickListener = (H, map) => {
+    map.addEventListener('tap', function (evt) {
+      const coord = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
+      console.log('Clicked at ' + Math.abs(coord.lat.toFixed(4)) +
+        ((coord.lat > 0) ? 'N' : 'S') + ' ' +
+        Math.abs(coord.lng.toFixed(4)) +
+        ((coord.lng > 0) ? 'E' : 'W'));
+
+      // Add a new marker at the clicked position
+      addMarker(H, map, coord.lat, coord.lng);
+    });
+  };
+
+  const addMarker = (H, map, lat, lng) => {
+    const marker = new H.map.Marker({ lat, lng });
+    map.addObject(marker);
+    map.setCenter({ lat, lng });
+  };
 
   useEffect(() => {
     const initializeMap = async () => {
@@ -36,7 +56,7 @@ const MapComponent = ({ longitude, latitude }) => {
           const defaultLayers = platform.createDefaultLayers();
           console.log('Platform and defaultLayers created:', platform, defaultLayers); // Debugging statement
 
-          const map = new H.Map(
+          const mapInstance = new H.Map(
             document.getElementById('map'),
             defaultLayers.vector.normal.map,
             {
@@ -46,31 +66,23 @@ const MapComponent = ({ longitude, latitude }) => {
             }
           );
 
-          console.log('Map created:', map); // Debugging statement
+          console.log('Map created:', mapInstance); // Debugging statement
 
-          window.addEventListener('resize', () => map.getViewPort().resize());
+          window.addEventListener('resize', () => mapInstance.getViewPort().resize());
 
-          const behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
-          const ui = H.ui.UI.createDefault(map, defaultLayers);
+          const behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(mapInstance));
+          const ui = H.ui.UI.createDefault(mapInstance, defaultLayers);
 
-          const LocationOfMarker = { lat: latitude, lng: longitude };
+          const LocationOfMarker = { lat: mapConfig.latitude, lng: mapConfig.longitude };
 
           // Path to the marker icon in the public directory
-          const markerIconPath = '../../public/marker_icon.png';
-          console.log('Marker icon path:', markerIconPath); // Debugging statement
-
-          // Create a marker icon from an image URL:
-          const icon = new H.map.Icon(markerIconPath);
-
-          // Create a marker using the previously instantiated icon:
-          const marker = new H.map.Marker(LocationOfMarker, { icon: icon });
-
-          // Add the marker to the map:
-          map.addObject(marker);
-          map.setCenter(LocationOfMarker);
-          map.setZoom(18);
+          const marker = new H.map.Marker(LocationOfMarker);
+          mapInstance.addObject(marker);
 
           console.log('Marker added:', marker); // Debugging statement
+
+          setMap(mapInstance);
+          setUpClickListener(H, mapInstance);
         } catch (error) {
           console.error('Error initializing map:', error);
         }
@@ -78,7 +90,7 @@ const MapComponent = ({ longitude, latitude }) => {
     };
 
     initializeMap();
-  }, [mapConfig, latitude, longitude]);
+  }, [mapConfig]);
 
   return (
     <div
