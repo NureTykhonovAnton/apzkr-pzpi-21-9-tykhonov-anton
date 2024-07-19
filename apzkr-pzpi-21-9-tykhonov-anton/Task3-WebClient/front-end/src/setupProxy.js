@@ -8,4 +8,17 @@ module.exports = function(app) {
       changeOrigin: true,
     })
   );
+  app.use(
+    '/api/here',
+    createProxyMiddleware({
+      target: 'https://route.ls.hereapi.com',
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/here': '', // Remove /api/here from the path
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        console.log(`Proxying request to: ${proxyReq.path}`);
+      }
+    })
+  );
 };
