@@ -1,0 +1,17 @@
+{
+    "language_name" : "עִברִית",
+    "route_length" : "אורך המסלול",
+    "login":"התחברות",
+    "register":"הירשם",
+    "logout":"להתנתק",
+    "cookie_banner_message":"אנו משתמשים בעוגיות כדי לשפר את החוויה שלך באתר. אשר את השימוש בעוגיות.",
+    "cookie_banner_confirm":"לְאַשֵׁר",
+    "kilometers":"קילומטרים",
+    "miles":"מיילס",
+    "km":"km",
+    "mi":"mi",
+    "longitude":"קו אורך",
+    "latitude":"קו רוחב",
+    "current_location":"מיקום נוכחי",
+    "map":"מַפָּה"
+}

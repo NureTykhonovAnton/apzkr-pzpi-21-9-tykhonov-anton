@@ -9,11 +9,10 @@ import {
   Typography,
   Box,
   ThemeProvider,
-  createTheme
 } from '@mui/material';
 import { loginUser } from '../api/userRequests';
 
-const theme = createTheme();
+
 
 const LoginModal = ({ open, handleClose }) => {
   const [username, setUsername] = useState('');
@@ -43,7 +42,6 @@ const LoginModal = ({ open, handleClose }) => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Login</DialogTitle>
         <DialogContent>
@@ -81,7 +79,6 @@ const LoginModal = ({ open, handleClose }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </ThemeProvider>
   );
 };
 

@@ -1,0 +1,18 @@
+{
+    "language_name" : "Українська",
+    "route_length" : "Довжина путі",
+    "login":"Увійти",
+    "register":"Зареєструватися",
+    "logout":"Вийти",
+    "cookie_banner_message":"Ми використовуємо файли cookie, щоб покращити вашу роботу на сайті. Підтвердити використання файлів cookie.",
+    "cookie_banner_confirm":"Підтвердити",
+    "kilometers":"кілометрів",
+    "miles":"милі",
+    "km":"км",
+    "mi":"мі",
+    "longitude":"Довгота",
+    "latitude":"Широта",
+    "current_location":"Поточне місцезнаходження",
+    "map":"Мапа"
+
+}

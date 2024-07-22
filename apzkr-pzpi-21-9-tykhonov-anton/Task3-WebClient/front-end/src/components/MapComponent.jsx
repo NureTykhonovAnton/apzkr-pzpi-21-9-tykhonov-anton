@@ -1,21 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { hereMapLoader } from '../utils/hereMapLoader';
 import fetchMapData from '../api/mapRequests';
+import { calculateRouteLength } from '../utils/calculateRoute';
+import { useTranslation } from 'react-i18next';
+import { useUnit } from '../utils/unitContext';
 
-const MapComponent = ({ longitude, latitude }) => {
+const MapComponent = () => {
+  const { t } = useTranslation();
+  const { unit, convertDistance } = useUnit();
   const [mapConfig, setMapConfig] = useState(null);
   const [map, setMap] = useState(null);
   const [mode, setMode] = useState('marker'); // 'marker' or 'circle'
   const [route, setRoute] = useState(null);
   const [markers, setMarkers] = useState([]);
-  const [platform, setPlatform] = useState(null); // Store the platform instance
-  const [routeLength, setRouteLength] = useState(null); // State to store the route length
+  const [platform, setPlatform] = useState(null);
+  const [routeLength, setRouteLength] = useState(null);
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+
+  useEffect(() => {
+    // Example of setting coordinates
+    const fetchGeolocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLatitude(position.coords.latitude);
+            setLongitude(position.coords.longitude);
+          },
+          (error) => {
+            console.error('Error getting geolocation:', error);
+          }
+        );
+      } else {
+        console.error('Geolocation is not supported by this browser.');
+      }
+    };
+
+    fetchGeolocation();
+  }, []);
+
+
+
 
   useEffect(() => {
     const fetchMapConfig = async () => {
       try {
         const response = await fetchMapData(latitude, longitude);
-        console.log('Map data received from backend:', response); // Debugging message
+        console.log('Map data received from backend:', response);
         setMapConfig(response);
       } catch (error) {
         console.error('Error fetching map config:', error);
@@ -66,10 +97,9 @@ const MapComponent = ({ longitude, latitude }) => {
       if (result.routes && result.routes.length > 0) {
         const route = result.routes[0];
         if (route.sections && route.sections.length > 0) {
-          const lineStrings = [];
-          route.sections.forEach((section) => {
-            lineStrings.push(H.geo.LineString.fromFlexiblePolyline(section.polyline));
-          });
+          const lineStrings = route.sections.map(section =>
+            H.geo.LineString.fromFlexiblePolyline(section.polyline)
+          );
 
           const multiLineString = new H.geo.MultiLineString(lineStrings);
 
@@ -102,9 +132,8 @@ const MapComponent = ({ longitude, latitude }) => {
           map.getViewModel().setLookAtData({
             bounds: group.getBoundingBox()
           });
-
-          const routeLength = route.sections.reduce((acc, section) => acc + section.travelSummary.length, 0) / 1000;
-          setRouteLength(routeLength); // Convert meters to kilometers
+          const totalRouteLength = calculateRouteLength(route.sections);
+          setRouteLength(totalRouteLength);
           setRoute(route);
         } else {
           console.error('No sections found in the route');
@@ -204,38 +233,50 @@ const MapComponent = ({ longitude, latitude }) => {
   };
 
   return (
-    <div>
-      <div>
-        <label>
-          <input 
-            type="radio" 
-            value="marker" 
-            checked={mode === 'marker'} 
-            onChange={handleModeChange} 
-          />
-          Add Marker
-        </label>
-        <label>
-          <input 
-            type="radio" 
-            value="circle" 
-            checked={mode === 'circle'} 
-            onChange={handleModeChange} 
-          />
-          Draw Circle
-        </label>
-      </div>
-      <div
-        id="map"
-        style={{
-          width: '100%',
-          height: '500px',
-          background: 'grey',
-          position: 'relative'
-        }}
-      />
-      {routeLength !== null && <p>Route length: {routeLength} km</p>} {/* Display route length */}
-    </div>
+<div>
+            <h1>{t('map')}</h1>
+            <div>
+            <h3>{t('current_location')}</h3>
+                <p>{t('longitude')}: {longitude}</p>
+                <p>{t('latitude')}: {latitude}</p>
+            </div>
+            {latitude && longitude ? (
+                <div>
+                <div>
+                  <label>
+                    <input 
+                      type="radio" 
+                      value="marker" 
+                      checked={mode === 'marker'} 
+                      onChange={handleModeChange} 
+                    />
+                    Add Marker
+                  </label>
+                  <label>
+                    <input 
+                      type="radio" 
+                      value="circle" 
+                      checked={mode === 'circle'} 
+                      onChange={handleModeChange} 
+                    />
+                    Draw Circle
+                  </label>
+                </div>
+                <div
+                  id="map"
+                  style={{
+                    width: '100%',
+                    height: '500px',
+                    background: 'grey',
+                    position: 'relative'
+                  }}
+                />
+                {routeLength !== null && <p>{t('route_length')}: {convertDistance(routeLength,unit)} {unit === 'km' ? t('kilometers') : t('miles')}</p>} {/* Display route length */}
+              </div>
+            ) : (
+                <p>Loading map...</p>
+            )}
+        </div>
   );
 };
 

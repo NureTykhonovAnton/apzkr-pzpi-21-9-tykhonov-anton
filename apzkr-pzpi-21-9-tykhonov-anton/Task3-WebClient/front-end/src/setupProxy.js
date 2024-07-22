@@ -14,7 +14,7 @@ module.exports = function(app) {
       target: 'https://route.ls.hereapi.com',
       changeOrigin: true,
       pathRewrite: {
-        '^/api/here': '', // Remove /api/here from the path
+        '^/api/here': '',
       },
       onProxyReq: (proxyReq, req, res) => {
         console.log(`Proxying request to: ${proxyReq.path}`);

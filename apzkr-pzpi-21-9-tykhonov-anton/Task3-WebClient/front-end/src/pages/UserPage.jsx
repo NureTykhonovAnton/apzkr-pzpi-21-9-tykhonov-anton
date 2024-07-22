@@ -1,7 +1,10 @@
 import React from 'react';
 import { Container, Typography, Box, Button } from '@mui/material';
-import SimpleGeoLocComponent from '../components/SimpleGeoLocComponent'
+import MapComponent from '../components/MapComponent';
+import { useTheme } from '../utils/themeContext';
+
 const UserPage = () => {
+  const { mode, toggleTheme } = useTheme();
   return (
     <Container>
       <Box sx={{ textAlign: 'center', mt: 8 }}>
@@ -20,7 +23,7 @@ const UserPage = () => {
           </Button>
         </Box>
       </Box>
-      <SimpleGeoLocComponent/>
+      <MapComponent/>
     </Container>
   );
 };

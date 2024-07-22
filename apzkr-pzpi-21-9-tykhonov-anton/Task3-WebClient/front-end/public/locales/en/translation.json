@@ -1,0 +1,17 @@
+{
+    "language_name" : "English",
+    "route_length" : "Route length",
+    "login":"Login",
+    "register":"Register",
+    "logout":"Logout",
+    "cookie_banner_message":"We use cookies to improve your experience on the site. Confirm the use of cookies.",
+    "cookie_banner_confirm":"Confirm",
+    "kilometers":"kilometers",
+    "miles":"miles",
+    "km":"km",
+    "mi":"mi",
+    "longitude":"Longitude",
+    "latitude":"Latitude",
+    "current_location":"Current Location",
+    "map":"Map"
+}

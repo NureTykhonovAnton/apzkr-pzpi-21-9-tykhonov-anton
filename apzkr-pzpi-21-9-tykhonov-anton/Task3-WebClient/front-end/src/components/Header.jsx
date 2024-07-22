@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, createTheme, ThemePro } from 'react';
 import { Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, CircularProgress } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, CircularProgress,} from '@mui/material';
 import RegisterModal from './RegisterModalComponent';
 import LoginModal from './LoginModalComponent';
 import { useAuth } from '../utils/authContext';
+import LanguageSwitcher from './LanguageSwitcherComponent';
+import { useTranslation } from 'react-i18next';
+import UnitSwitcher from './UnitSwitcher';
+import ThemeSwitcher from './ThemeSwitcher';
 
 const Header = () => {
+  const { t } = useTranslation();
   const { role, loading } = useAuth();
   const [registerOpen, setRegisterOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -34,7 +39,7 @@ const Header = () => {
   if (loading) {
     return <CircularProgress />;
   }
-
+  
   return (
     <>
       <AppBar position="static">
@@ -46,14 +51,17 @@ const Header = () => {
             <>
               {role?.name === 'admin' && <Button color="inherit" component={Link} to="/admin-page">Admin Page</Button>}
               {role?.name === 'user' && <Button color="inherit" component={Link} to="/user-page">User Page</Button>}
-              <Button color="inherit" onClick={handleLogout}>Logout</Button>
+              <Button color="inherit" onClick={handleLogout}>{t('logout')}</Button>
             </>
           ) : (
             <>
-              <Button color="inherit" onClick={handleLoginOpen}>Login</Button>
-              <Button color="inherit" onClick={handleRegisterOpen}>Register</Button>
+              <Button color="inherit" onClick={handleLoginOpen}>{t('login')}</Button>
+              <Button color="inherit" onClick={handleRegisterOpen}>{t('register')}</Button>
             </>
           )}
+            <LanguageSwitcher />
+            <UnitSwitcher />
+            <ThemeSwitcher/>
         </Toolbar>
       </AppBar>
       <RegisterModal open={registerOpen} handleClose={handleRegisterClose} />
