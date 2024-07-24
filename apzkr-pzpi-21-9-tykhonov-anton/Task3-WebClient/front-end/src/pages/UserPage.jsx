@@ -1,30 +1,52 @@
+// UserPage.js
 import React from 'react';
-import { Container, Typography, Box, Button } from '@mui/material';
+import { Container, Box, styled  } from '@mui/material';
 import MapComponent from '../components/MapComponent';
-import { useTheme } from '../utils/themeContext';
+import EvacuationCenters from '../components/EvacuationCentersVerticalTableComponent';
+import EmergencyManagementComponent from '../components/EmergencyManagementComponent';
+import TransportationVehicleManagementComponent from '../components/TransportTypeManagementComponent'
+import { ThemeProvider, useTheme } from '../utils/themeContext';
+import ZonesCerticalTableComponent from '../components/ZonesCerticalTableComponent';
+const UserPage = ({ currentComponent, setCurrentComponent, drawerOpen, toggleDrawer }) => {
+  const theme = useTheme();
+  const ThemedContainer = styled(Container)(({ theme }) => ({
+    backgroundColor: theme.palette.background.default,
+    minHeight: '100vh',
+  }));
 
-const UserPage = () => {
-  const { mode, toggleTheme } = useTheme();
+  const renderComponent = (currentComponent) => {
+    switch (currentComponent) {
+      case 'map':
+        return (
+          <Box display="flex" width="100%" sx={{alignItems: 'center', p:2 }}>
+            <Box flex={2} mr={2} > {/* Adjust the flex value and margin as needed */}
+              <MapComponent />
+            </Box>
+            <Box flex={1}> {/* Adjust the flex value as needed */}
+              <EvacuationCenters />
+              <ZonesCerticalTableComponent/>
+            </Box>
+          </Box>
+        );
+      case 'emergency_management':
+        return <EmergencyManagementComponent />;
+      case 'transport':
+        return <TransportationVehicleManagementComponent />;
+      default:
+        return <MapComponent />;
+    }
+  };
+
   return (
-    <Container>
-      <Box sx={{ textAlign: 'center', mt: 8 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          User Dashboard
-        </Typography>
-        <Typography variant="h5" component="h2" gutterBottom>
-          Welcome to your user dashboard. Here you can manage your profile and view your content.
-        </Typography>
-        <Box sx={{ mt: 4 }}>
-          <Button variant="contained" color="primary" sx={{ mr: 2 }}>
-            Edit Profile
-          </Button>
-          <Button variant="contained" color="secondary">
-            View Content
-          </Button>
+    <ThemeProvider>
+    <ThemedContainer>
+      <Box display="flex">
+        <Box flexGrow={1}>
+          {renderComponent(currentComponent)}
         </Box>
       </Box>
-      <MapComponent/>
-    </Container>
+    </ThemedContainer>
+    </ThemeProvider>
   );
 };
 

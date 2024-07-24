@@ -4,6 +4,9 @@ import fetchMapData from '../api/mapRequests';
 import { calculateRouteLength } from '../utils/calculateRoute';
 import { useTranslation } from 'react-i18next';
 import { useUnit } from '../utils/unitContext';
+import { fetchCenters } from '../api/centerRequests';
+import { fetchZones } from '../api/zoneRequests';
+import { FormControl, FormLabel, FormControlLabel, Radio, RadioGroup, Box } from '@mui/material';
 
 const MapComponent = () => {
   const { t } = useTranslation();
@@ -17,6 +20,8 @@ const MapComponent = () => {
   const [routeLength, setRouteLength] = useState(null);
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
+  const [evacuationCenters, setEvacuationCenters] = useState([]);
+  const [zones, setZones] = useState([])
 
   useEffect(() => {
     // Example of setting coordinates
@@ -34,15 +39,12 @@ const MapComponent = () => {
       } else {
         console.error('Geolocation is not supported by this browser.');
       }
+
+
+
+
+
     };
-
-    fetchGeolocation();
-  }, []);
-
-
-
-
-  useEffect(() => {
     const fetchMapConfig = async () => {
       try {
         const response = await fetchMapData(latitude, longitude);
@@ -52,8 +54,34 @@ const MapComponent = () => {
         console.error('Error fetching map config:', error);
       }
     };
+    const fetchEvacuationCenters = async () => {
+      try {
+        const response = await fetchCenters(); // Replace with your endpoint
+        setEvacuationCenters(response);
+      } catch (error) {
+        console.error('Error fetching evacuation centers:', error);
+      }
+    };
 
+
+
+    const fetchEmergencyZones = async () => {
+      try {
+        const response = await fetchZones(); // Replace with your endpoint
+        setZones(response);
+      } catch (error) {
+        console.error('Error fetching evacuation centers:', error);
+      }
+    };
+    fetchGeolocation();
     fetchMapConfig();
+    fetchEvacuationCenters();
+    fetchEmergencyZones();
+
+
+
+
+
   }, [latitude, longitude]);
 
   const addMarker = (H, map, lat, lng) => {
@@ -65,7 +93,7 @@ const MapComponent = () => {
   };
 
   const addCircleToMap = (H, map, lat, lng) => {
-    map.addObject(new H.map.Circle(
+    const circle = new H.map.Circle(
       { lat, lng },
       1000,
       {
@@ -75,7 +103,8 @@ const MapComponent = () => {
           fillColor: 'rgba(255, 0, 0, 0.3)'
         }
       }
-    ));
+    )
+    map.addObject(circle);
   };
 
   const calculateRoute = (H, map, platform, start, end) => {
@@ -124,7 +153,7 @@ const MapComponent = () => {
 
           const startMarker = new H.map.Marker(start);
           const endMarker = new H.map.Marker(end);
-
+          console.log(route)
           const group = new H.map.Group();
           group.addObjects([routeBackground, routeArrows, startMarker, endMarker]);
           map.addObject(group);
@@ -190,6 +219,9 @@ const MapComponent = () => {
           setMarkers([initialMarker]);
 
           setUpClickListener(H, mapInstance);
+
+
+
         } catch (error) {
           console.error('Error initializing map:', error);
         }
@@ -197,13 +229,45 @@ const MapComponent = () => {
     };
 
     initializeMap();
+
   }, [mapConfig]);
+  
+  useEffect(() => {
+
+
+    // Add markers for evacuation centers
+    evacuationCenters.forEach(center => {
+      console.log(center)
+      const lng = center.longitude
+      const lat = center.latitude
+      new map.Marker({ lat, lng });
+    });
+
+    zones.forEach(zone => {
+      const lng = zone.longitude, lat = zone.latitude
+      const circle = new map.Circle(
+        { lat, lng },
+        zone.radius,
+        {
+          style: {
+            strokeColor: 'rgba(0, 0, 0, 0.5)',
+            lineWidth: 2,
+            fillColor: 'rgba(255, 0, 0, 0.3)'
+          }
+        }
+      )
+      map.addObject(circle);
+    })
+
+  }, [])
 
   useEffect(() => {
     if (map && markers.length === 2 && platform) {
       const start = markers[0].getGeometry();
       const end = markers[1].getGeometry();
-      calculateRoute(window.H, map, platform, start, end);
+      if (mode === 'marker') {
+        calculateRoute(window.H, map, platform, start, end);
+      }
     }
   }, [map, markers, platform]);
 
@@ -233,50 +297,56 @@ const MapComponent = () => {
   };
 
   return (
-<div>
-            <h1>{t('map')}</h1>
-            <div>
-            <h3>{t('current_location')}</h3>
-                <p>{t('longitude')}: {longitude}</p>
-                <p>{t('latitude')}: {latitude}</p>
-            </div>
-            {latitude && longitude ? (
-                <div>
-                <div>
-                  <label>
-                    <input 
-                      type="radio" 
-                      value="marker" 
-                      checked={mode === 'marker'} 
-                      onChange={handleModeChange} 
-                    />
-                    Add Marker
-                  </label>
-                  <label>
-                    <input 
-                      type="radio" 
-                      value="circle" 
-                      checked={mode === 'circle'} 
-                      onChange={handleModeChange} 
-                    />
-                    Draw Circle
-                  </label>
-                </div>
-                <div
-                  id="map"
-                  style={{
-                    width: '100%',
-                    height: '500px',
-                    background: 'grey',
-                    position: 'relative'
-                  }}
+    <div>
+      <h1>{t('map')}</h1>
+      <div>
+        <h3>{t('current_location')}</h3>
+        <p>{t('longitude')}: {longitude}</p>
+        <p>{t('latitude')}: {latitude}</p>
+      </div>
+      {latitude && longitude ? (
+        <div>
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Select Mode</FormLabel>
+            <RadioGroup
+              aria-label="mode"
+              name="mode"
+              value={mode}
+              onChange={handleModeChange}
+              row
+            >
+              <Box display="flex" flexDirection="row">
+                <FormControlLabel
+                  value="marker"
+                  control={<Radio />}
+                  label="Add Marker"
+                  sx={{ marginRight: 2 }} // Adjust spacing between options
                 />
-                {routeLength !== null && <p>{t('route_length')}: {convertDistance(routeLength,unit)} {unit === 'km' ? t('kilometers') : t('miles')}</p>} {/* Display route length */}
-              </div>
-            ) : (
-                <p>Loading map...</p>
-            )}
+                <FormControlLabel
+                  value="circle"
+                  control={<Radio />}
+                  label="Draw Circle"
+                />
+              </Box>
+            </RadioGroup>
+          </FormControl>
+          <div
+            id="map"
+            style={{
+              width: '100%',
+              height: '500px',
+              background: 'grey',
+              position: 'relative',
+              border: 'solid black 3px',
+              borderRadius: '5px'
+            }}
+          />
+          {routeLength !== null && <p>{t('route_length')}: {convertDistance(routeLength, unit)} {unit === 'km' ? t('kilometers') : t('miles')}</p>} {/* Display route length */}
         </div>
+      ) : (
+        <p>Loading map...</p>
+      )}
+    </div>
   );
 };
 

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Container, Box, Table, TableBody, TableCell, TableHead, TableRow, Typography, Dialog, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Alert } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { fetchCenters, createCenter, updateCenter, deleteCenter } from '../api/centerRequests'; // Убедитесь, что путь верный
 
-const theme = createTheme();
 
 const CenterManagementComponent = () => {
   const [centers, setCenters] = useState([]);
@@ -82,7 +80,7 @@ const CenterManagementComponent = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
+    <>
       <Container maxWidth="md">
         <Box sx={{ mt: 4 }}>
           <Typography variant="h4" align="center" gutterBottom>
@@ -226,7 +224,7 @@ const CenterManagementComponent = () => {
           </Dialog>
         </Box>
       </Container>
-    </ThemeProvider>
+    </>
   );
 };
 

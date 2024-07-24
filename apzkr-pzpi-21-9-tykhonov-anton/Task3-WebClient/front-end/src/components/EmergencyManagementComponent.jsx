@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchEmergencies, createEmergency, updateEmergency, deleteEmergency } from '../api/emergencyRequests';
 import { fetchEmergencyTypes } from '../api/emergencyTypeRequests';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, MenuItem, Select, InputLabel, FormControl, Checkbox, FormControlLabel } from '@mui/material';
+import { useAuth } from '../utils/authContext';
 
 const EmergencyManagementComponent = () => {
   const [emergencies, setEmergencies] = useState([]);
@@ -9,6 +10,7 @@ const EmergencyManagementComponent = () => {
   const [newEmergency, setNewEmergency] = useState({ startedAt: '', endedAt: '', hasEnded: false, emergencyTypeId: '' });
   const [editEmergency, setEditEmergency] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const { role } = useAuth();
 
   useEffect(() => {
     const loadEmergencies = async () => {
@@ -90,7 +92,7 @@ const EmergencyManagementComponent = () => {
             <TableCell>Ended At</TableCell>
             <TableCell>Has Ended</TableCell>
             <TableCell>Type</TableCell>
-            <TableCell>Actions</TableCell>
+            {role?.name.toLowerCase() === 'admin' && (<TableCell>Actions</TableCell>)}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -101,46 +103,49 @@ const EmergencyManagementComponent = () => {
               <TableCell>{emergency.endedAt}</TableCell>
               <TableCell>{emergency.hasEnded ? 'Yes' : 'No'}</TableCell>
               <TableCell>{emergencyTypes.find(type => type.id === emergency.emergencyTypeId)?.name}</TableCell>
-              <TableCell>
-                <Button 
-                  aria-label="edit" 
-                  variant="contained" 
-                  color="secondary" 
-                  onClick={() => handleEditClick(emergency)}
-                >
-                  Edit
-                </Button>
-                <Button 
-                  aria-label="delete" 
-                  variant="contained" 
-                  color="primary" 
-                  onClick={() => handleDeleteEmergency(emergency.id)}
-                  sx={{ ml: 1 }}
-                >
-                  Delete
-                </Button>
-              </TableCell>
+              {role?.name.toLowerCase() === 'admin' && (
+                <TableCell>
+                  <Button
+                    aria-label="edit"
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleEditClick(emergency)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    aria-label="delete"
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleDeleteEmergency(emergency.id)}
+                    sx={{ ml: 1 }}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              )}
+
             </TableRow>
           ))}
           <TableRow>
             <TableCell colSpan={2}>
-              <TextField 
-                label="Started At" 
+              <TextField
+                label="Started At"
                 type="datetime-local"
                 name="startedAt"
-                value={newEmergency.startedAt} 
-                onChange={(e) => setNewEmergency({ ...newEmergency, startedAt: e.target.value })} 
-                fullWidth 
+                value={newEmergency.startedAt}
+                onChange={(e) => setNewEmergency({ ...newEmergency, startedAt: e.target.value })}
+                fullWidth
               />
             </TableCell>
             <TableCell>
-              <TextField 
-                label="Ended At" 
+              <TextField
+                label="Ended At"
                 type="datetime-local"
                 name="endedAt"
-                value={newEmergency.endedAt} 
-                onChange={(e) => setNewEmergency({ ...newEmergency, endedAt: e.target.value })} 
-                fullWidth 
+                value={newEmergency.endedAt}
+                onChange={(e) => setNewEmergency({ ...newEmergency, endedAt: e.target.value })}
+                fullWidth
               />
             </TableCell>
             <TableCell>
@@ -165,9 +170,9 @@ const EmergencyManagementComponent = () => {
               </FormControl>
             </TableCell>
             <TableCell>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={handleCreateEmergency}
               >
                 Create Emergency
@@ -181,30 +186,30 @@ const EmergencyManagementComponent = () => {
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
         <DialogTitle>Edit Emergency</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{my:1}} >
+          <DialogContentText sx={{ my: 1 }} >
             Update the details of the emergency.
           </DialogContentText>
-          <TextField sx={{my:1}}
-            label="Started At" 
+          <TextField sx={{ my: 1 }}
+            label="Started At"
             type="datetime-local"
             name="startedAt"
-            value={editEmergency?.startedAt || ''} 
-            onChange={handleEditChange} 
-            fullWidth 
+            value={editEmergency?.startedAt || ''}
+            onChange={handleEditChange}
+            fullWidth
           />
-          <TextField sx={{my:1}}
-            label="Ended At" 
+          <TextField sx={{ my: 1 }}
+            label="Ended At"
             type="datetime-local"
             name="endedAt"
-            value={editEmergency?.endedAt || ''} 
-            onChange={handleEditChange} 
-            fullWidth 
+            value={editEmergency?.endedAt || ''}
+            onChange={handleEditChange}
+            fullWidth
           />
-          <FormControlLabel sx={{my:1}}
+          <FormControlLabel sx={{ my: 1 }}
             control={<Checkbox checked={editEmergency?.hasEnded || false} onChange={handleCheckboxChange} name="hasEnded" />}
             label="Has Ended"
           />
-          <FormControl fullWidth sx={{my:1}}>
+          <FormControl fullWidth sx={{ my: 1 }}>
             <InputLabel>Type</InputLabel>
             <Select
               name="emergencyTypeId"

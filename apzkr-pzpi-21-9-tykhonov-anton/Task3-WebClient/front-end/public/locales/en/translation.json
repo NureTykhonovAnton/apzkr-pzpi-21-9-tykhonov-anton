@@ -13,5 +13,9 @@
     "longitude":"Longitude",
     "latitude":"Latitude",
     "current_location":"Current Location",
-    "map":"Map"
+    "map":"Map",
+    "user":"User",
+    "admin":"Admin",
+    "history":"History",
+    "transport":"Transport"
 }

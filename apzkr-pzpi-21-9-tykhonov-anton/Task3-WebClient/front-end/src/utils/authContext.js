@@ -1,14 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserData } from '../api/userRequests';
-
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState({ name: '' });
   const navigate = useNavigate();
-
   useEffect(() => {
     const checkToken = async () => {
       const token = localStorage.getItem('token');
