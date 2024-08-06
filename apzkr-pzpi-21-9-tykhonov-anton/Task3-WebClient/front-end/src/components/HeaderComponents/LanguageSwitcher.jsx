@@ -1,16 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FormControl, Select, MenuItem, InputLabel } from '@mui/material';
-
-
-
+import { FormControl, Select, MenuItem } from '@mui/material';
 
 const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
-  const [language, setLanguage] = React.useState(i18n.language);
-
-  
-
+  const [language, setLanguage] = useState(i18n.language);
 
   const changeLanguage = (event) => {
     const lng = event.target.value;
@@ -18,8 +12,21 @@ const LanguageSwitcher = () => {
     i18n.changeLanguage(lng);
   };
 
+  useEffect(() => {
+    const handleLanguageChanged = (lng) => {
+      setLanguage(lng);
+    };
+
+    i18n.on('languageChanged', handleLanguageChanged);
+    
+    // Cleanup on unmount
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
+
   return (
-    <FormControl  style={{ minWidth: 60 }} sx={{p:-2}}>
+    <FormControl style={{ minWidth: 60 }} sx={{ p: -2 }}>
       <Select
         id="language-select"
         value={language}
@@ -31,7 +38,6 @@ const LanguageSwitcher = () => {
       </Select>
     </FormControl>
   );
-  
 };
 
 export default LanguageSwitcher;

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
 import { fetchCenters } from '../api/centerRequests';
 
-const EvacuationCenters = (map) => {
+const EvacuationCenters = ({onCenterSelect}) => {
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Replace this URL with your server endpoint
     fetchCenters()
       .then(data => {
         setCenters(data);
@@ -18,6 +17,12 @@ const EvacuationCenters = (map) => {
         setLoading(false);
       });
   }, []);
+
+  const handleCenterClick = (center) => {
+    if (onCenterSelect) {
+      onCenterSelect(center);
+    }
+  };
 
   if (loading) {
     return <CircularProgress />;
@@ -34,7 +39,7 @@ const EvacuationCenters = (map) => {
         <TableBody>
           {centers.length > 0 ? (
             centers.map((center, id) => (
-              <TableRow key={id}>
+              <TableRow key={id} onClick={() => handleCenterClick(center)} style={{ cursor: 'pointer' }}>
                 <TableCell>{center.name}</TableCell>
               </TableRow>
             ))
@@ -48,5 +53,4 @@ const EvacuationCenters = (map) => {
     </TableContainer>
   );
 };
-
 export default EvacuationCenters;

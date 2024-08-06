@@ -40,6 +40,29 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+//GET Transport by User ID
+
+router.get('users/:id', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const transports = await Transport.findAll({
+      where: { driverId: userId },
+      include: [
+        { model: User, as: 'driver' }
+      ]
+    });
+
+    if (!transports) {
+      return res.status(404).json({ message: 'Transports not found' });
+    }
+
+    res.status(200).json(transports);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+})
+
 // CREATE a new transport
 router.post('/', async (req, res) => {
   const { model, typeId, capacity, driverId, licencePlate, img } = req.body;

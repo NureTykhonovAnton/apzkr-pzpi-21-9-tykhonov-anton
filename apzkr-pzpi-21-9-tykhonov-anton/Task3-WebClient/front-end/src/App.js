@@ -3,13 +3,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import WelcomePage from './pages/WelcomePage';
 import UserPage from './pages/UserPage';
 import AdminPage from './pages/AdminPage';
-import Header from './components/Header';
+import Header from './components/HeaderComponents/Header';
 import CookieBanner from './components/CookieBanner';
-import { AuthProvider } from './utils/authContext';
+import { AuthProvider } from './contexts/authContext';
 import { I18nextProvider } from 'react-i18next';
-import i18n from './utils/i18n';
-import { UnitProvider } from './utils/unitContext';
-import { ThemeProvider } from './utils/themeContext';
+import i18n from './contexts/i18nContext';
+import { UnitProvider } from './contexts/unitContext';
+import { ThemeProvider } from './contexts/themeContext';
+import MultiProvider from './contexts/multiProvider';
 
 const App = () => {
   const [currentComponent, setCurrentComponent] = useState('map');
@@ -21,23 +22,24 @@ const App = () => {
 
 
   return (
-    <I18nextProvider i18n={i18n}>
-      <UnitProvider>
-        <CookieBanner />
-        <ThemeProvider>
-          <Router>
-            <AuthProvider>
-              <Header setCurrentComponent={setCurrentComponent} drawerOpen={drawerOpen} toggleDrawer={toggleDrawer} />
-              <Routes>
-                <Route path="/" element={<WelcomePage />} />
-                <Route path="/user-page" element={<UserPage currentComponent={currentComponent} setCurrentComponent={setCurrentComponent} drawerOpen={drawerOpen} toggleDrawer={toggleDrawer} />} />
-                <Route path="/admin-page" element={<AdminPage />} />
-              </Routes>
-            </AuthProvider>
-          </Router>
-        </ThemeProvider>
-      </UnitProvider>
-    </I18nextProvider>
+    <MultiProvider
+      providers={[
+        <I18nextProvider i18n={i18n} />,
+        <UnitProvider />,
+        <ThemeProvider/>
+      ]}>
+      <CookieBanner />
+      <Router>
+        <AuthProvider>
+          <Header setCurrentComponent={setCurrentComponent} drawerOpen={drawerOpen} toggleDrawer={toggleDrawer} />
+          <Routes>
+            <Route path="/" element={<WelcomePage />} />
+            <Route path="/user-page" element={<UserPage currentComponent={currentComponent} setCurrentComponent={setCurrentComponent} drawerOpen={drawerOpen} toggleDrawer={toggleDrawer} />} />
+            <Route path="/admin-page" element={<AdminPage />} />
+          </Routes>
+        </AuthProvider>
+      </Router>
+    </MultiProvider>
   );
 };
 

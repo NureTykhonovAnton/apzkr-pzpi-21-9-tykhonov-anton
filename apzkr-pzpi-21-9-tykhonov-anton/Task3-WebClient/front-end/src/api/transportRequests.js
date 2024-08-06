@@ -23,6 +23,15 @@ export const createTransportationVehicle = async (vehicle) => {
     throw error;
   }
 };
+export const getTransportByUserId = async (userId) =>{
+  try{
+    const response = await axios.get(TRANSPORTATION_VEHICLES_API_URL,`/users/${userId}`);
+    return response.data;
+  }catch(error){
+    console.error(`Error getting transportation vehicle based on user id ${userId}:`, error);
+    throw error;
+  }
+}
 
 export const getTransportationVehicleById = async (id) => {
   try {

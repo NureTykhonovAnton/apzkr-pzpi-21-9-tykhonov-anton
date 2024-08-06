@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchEmergencies, createEmergency, updateEmergency, deleteEmergency } from '../api/emergencyRequests';
 import { fetchEmergencyTypes } from '../api/emergencyTypeRequests';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, MenuItem, Select, InputLabel, FormControl, Checkbox, FormControlLabel } from '@mui/material';
-import { useAuth } from '../utils/authContext';
+import { useAuth } from '../contexts/authContext';
 
 const EmergencyManagementComponent = () => {
   const [emergencies, setEmergencies] = useState([]);

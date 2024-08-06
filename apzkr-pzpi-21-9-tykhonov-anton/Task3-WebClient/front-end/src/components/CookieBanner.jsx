@@ -15,7 +15,7 @@ const CookieBanner = () => {
   }, [cookies]);
 
   const handleAccept = () => {
-    setCookie('acceptedCookies', true, { path: '/' });
+    setCookie('acceptedCookies', true, { path: '/' , expires: new Date(new Date().getTime() + 365*24*60*60*1000)});
     setOpen(false);
   };
 

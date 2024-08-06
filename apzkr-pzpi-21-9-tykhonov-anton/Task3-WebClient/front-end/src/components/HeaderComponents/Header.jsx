@@ -4,11 +4,10 @@ import { AppBar, Toolbar, Typography, Button, CircularProgress, IconButton } fro
 import MenuIcon from '@mui/icons-material/Menu';
 import RegisterModal from './RegisterModalComponent';
 import LoginModal from './LoginModalComponent';
-import { useAuth } from '../utils/authContext';
+import { useAuth } from '../../contexts/authContext';
 import { useTranslation } from 'react-i18next';
-import Sidebar from './Sidebar';
+import Sidebar from '../Sidebar';
 import HeaderSettingsMenu from './HeaderSettingsMenu';
-import { ThemeProvider } from '../utils/themeContext'; // Import ThemeProvider
 
 const Header = ({ setCurrentComponent }) => {
   const { t } = useTranslation();
@@ -47,7 +46,6 @@ const Header = ({ setCurrentComponent }) => {
   }
 
   return (
-    <ThemeProvider> {/* Wrap with ThemeProvider */}
       <>
         <AppBar position="static">
           <Toolbar>
@@ -82,7 +80,6 @@ const Header = ({ setCurrentComponent }) => {
         <RegisterModal open={registerOpen} handleClose={handleRegisterClose} />
         <LoginModal open={loginOpen} handleClose={handleLoginClose} />
       </>
-    </ThemeProvider>
   );
 };
 

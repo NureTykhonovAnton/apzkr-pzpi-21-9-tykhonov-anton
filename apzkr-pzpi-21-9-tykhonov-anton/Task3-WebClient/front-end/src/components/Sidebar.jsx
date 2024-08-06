@@ -1,6 +1,6 @@
 import React from 'react';
 import { Drawer, List, ListItem, ListItemText } from '@mui/material';
-import { useAuth } from '../utils/authContext';
+import { useAuth } from '../contexts/authContext';
 import { useTranslation } from 'react-i18next';
 
 const Sidebar = ({ drawerOpen, toggleDrawer, setCurrentComponent }) => {

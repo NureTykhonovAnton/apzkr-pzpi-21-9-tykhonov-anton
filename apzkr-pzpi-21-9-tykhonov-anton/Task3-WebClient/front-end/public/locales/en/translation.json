@@ -17,5 +17,7 @@
     "user":"User",
     "admin":"Admin",
     "history":"History",
-    "transport":"Transport"
+    "transport":"Transport",
+    "light_theme":"Light Mode",
+    "dark_theme":"Dark Mode"
 }

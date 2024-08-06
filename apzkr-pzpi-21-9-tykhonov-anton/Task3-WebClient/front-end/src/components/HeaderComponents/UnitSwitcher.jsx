@@ -1,24 +1,25 @@
 import React, { useEffect } from 'react';
 import { useCookies } from 'react-cookie';
-import { FormControl, Select, MenuItem, InputLabel } from '@mui/material';
-import { useUnit } from '../utils/unitContext';
+import { FormControl, Select, MenuItem } from '@mui/material';
+import { useUnit } from '../../contexts/unitContext';
 import { useTranslation } from 'react-i18next';
 
 const UnitSwitcher = () => {
-  const {t}=useTranslation()
-  const [cookies, setCookie] = useCookies(['unit']);
+  const { t } = useTranslation();
+  const [cookies, setCookie] = useCookies(['unitPreference']); // Use 'unitPreference' to match the context
   const { unit, changeUnit } = useUnit();
 
+  // Sync unit state with cookie
   useEffect(() => {
-    if (cookies.unit) {
-      changeUnit(cookies.unit);
+    if (cookies.unitPreference) {
+      changeUnit(cookies.unitPreference);
     }
-  }, [cookies, changeUnit]);
+  }, [cookies.unitPreference, changeUnit]);
+
 
   const handleChange = (event) => {
     const newUnit = event.target.value;
     changeUnit(newUnit);
-    setCookie('unit', newUnit, { path: '/' });
   };
 
   return (

@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState({ name: '' });
+  const [userId, setUserId] = useState(null)
   const navigate = useNavigate();
   useEffect(() => {
     const checkToken = async () => {
@@ -13,6 +14,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const userData = await fetchUserData(token);
+          setUserId(userData.id)
           setRole(userData.role);
           if (userData.role && userData.role.name) {
             const name = userData.role.name;
@@ -40,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   }, [navigate]);
 
   return (
-    <AuthContext.Provider value={{ role, loading }}>
+    <AuthContext.Provider value={{ role, userId, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );

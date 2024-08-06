@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { CookiesProvider, useCookies } from 'react-cookie';
 
 // Define your light and dark themes
 const lightTheme = createTheme({
@@ -75,20 +76,13 @@ const darkTheme = createTheme({
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [mode, setMode] = useState('light');
+  const [cookies, setCookie] = useCookies(['themeMode']);
+  const [mode, setMode] = useState(cookies.themeMode || 'light');
 
-  // Load theme preference from localStorage
+  // Update the cookie when the mode changes
   useEffect(() => {
-    const savedMode = localStorage.getItem('themeMode');
-    if (savedMode) {
-      setMode(savedMode);
-    }
-  }, []);
-
-  // Save theme preference to localStorage
-  useEffect(() => {
-    localStorage.setItem('themeMode', mode);
-  }, [mode]);
+    setCookie('themeMode', mode, { path: '/', expires: new Date(new Date().getTime() + 365*24*60*60*1000) });
+  }, [mode, setCookie]);
 
   const toggleTheme = () => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
@@ -97,11 +91,13 @@ export const ThemeProvider = ({ children }) => {
   const theme = mode === 'light' ? lightTheme : darkTheme;
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleTheme }}>
-      <MuiThemeProvider theme={theme}>
-        {children}
-      </MuiThemeProvider>
-    </ThemeContext.Provider>
+    <CookiesProvider>
+      <ThemeContext.Provider value={{ mode, toggleTheme }}>
+        <MuiThemeProvider theme={theme}>
+          {children}
+        </MuiThemeProvider>
+      </ThemeContext.Provider>
+    </CookiesProvider>
   );
 };
 

@@ -3,13 +3,13 @@ import { initReactI18next } from 'react-i18next';
 import HttpApi from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Настройка i18next
+// Configure i18next
 i18n
-  .use(HttpApi) // загружает переводы с бэкенда
-  .use(LanguageDetector) // определяет язык пользователя
-  .use(initReactI18next) // интеграция с react-i18next
+  .use(HttpApi) // Load translations from the backend
+  .use(LanguageDetector) // Detect user language
+  .use(initReactI18next) // Integration with react-i18next
   .init({
-    fallbackLng: 'en', // язык по умолчанию
+    fallbackLng: 'en', // Default language if detected language is not available
     detection: {
       order: ['queryString', 'cookie', 'localStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
       caches: ['cookie']
@@ -23,3 +23,4 @@ i18n
   });
 
 export default i18n;
+

@@ -1,32 +1,49 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { createUser } from '../api/userRequests';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Typography,
+  Box,
+  ThemeProvider,
+} from '@mui/material';
+import { loginUser } from '../../api/userRequests';
 
-const theme = createTheme();
 
-const RegisterModal = ({ open, handleClose }) => {
+
+const LoginModal = ({ open, handleClose }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
-  const handleRegister = async () => {
+  const handleLogin = async () => {
+    if (!username || !password) {
+      setError('Username and password are required.');
+      return;
+    }
+
     try {
-      await createUser({ username, password });
-      setError(null);
-      setUsername('');
-      setPassword('');
-      handleClose();
+      const data = await loginUser({ username, password });
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        setError('');
+        handleClose(); // Close the modal on successful login
+        window.location.reload(); // Reload to fetch user data and update the header
+      } else {
+        setError('Invalid username or password.');
+      }
     } catch (error) {
-      console.error('Error during registration:', error);
-      setError('Error during registration. Please try again later.');
+      console.error('Error during login:', error);
+      setError('Error during login. Please try again later.');
     }
   };
 
   return (
-    <ThemeProvider theme={theme}>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Register</DialogTitle>
+        <DialogTitle>Login</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <TextField
@@ -57,13 +74,12 @@ const RegisterModal = ({ open, handleClose }) => {
           <Button onClick={handleClose} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleRegister} color="primary">
-            Register
+          <Button onClick={handleLogin} color="primary">
+            Login
           </Button>
         </DialogActions>
       </Dialog>
-    </ThemeProvider>
   );
 };
 
-export default RegisterModal;
+export default LoginModal;

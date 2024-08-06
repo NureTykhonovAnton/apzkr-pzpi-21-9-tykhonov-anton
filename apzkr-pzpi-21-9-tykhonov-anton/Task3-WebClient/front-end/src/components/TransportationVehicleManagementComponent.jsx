@@ -21,11 +21,12 @@ import {
   deleteTransportationVehicle,
   createTransportationVehicle,
   updateTransportationVehicle,
+  getTransportByUserId,
 } from '../api/transportRequests'; // Adjust the import path as necessary
 import { fetchUsers } from '../api/userRequests';
 import { fetchTransportTypes } from '../api/transportTypeRequests'; // Import for transport types
 import { renderImage } from '../utils/renderImage';
-
+import { useAuth } from '../contexts/authContext';
 const TransportationVehicleManagementComponent = () => {
   const [vehicles, setVehicles] = useState([]);
   const [users, setUsers] = useState([]);
@@ -33,6 +34,7 @@ const TransportationVehicleManagementComponent = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState(null);
+  const { role, userId } = useAuth();
   const [newVehicle, setNewVehicle] = useState({
     model: '',
     typeId: '',
@@ -43,25 +45,43 @@ const TransportationVehicleManagementComponent = () => {
   });
 
   useEffect(() => {
-    const loadVehicles = async () => {
-      const vehiclesData = await fetchTransportationVehicles();
-      setVehicles(vehiclesData);
-    };
+    if (role.name.toLowerCase() === 'admin') {
 
-    const loadUsers = async () => {
-      const usersData = await fetchUsers();
-      setUsers(usersData);
-    };
+      const loadAllVehicles = async () => {
+        const vehiclesData = await fetchTransportationVehicles();
+        setVehicles(vehiclesData);
+      };
+      loadAllVehicles();
 
-    const loadTypes = async () => {
-      const typesData = await fetchTransportTypes(); // Fetch transport types
-      setTypes(typesData);
-    };
+      const loadUsers = async () => {
+        const usersData = await fetchUsers();
+        setUsers(usersData);
+      };
+      loadUsers();
 
-    loadVehicles();
-    loadUsers();
-    loadTypes(); // Load transport types
+      const loadTypes = async () => {
+        const typesData = await fetchTransportTypes(); // Fetch transport types
+        setTypes(typesData);
+      };
+      loadTypes();
+    }
+    else if (role.name.toLowerCase() === 'user') {
+      const loadAppointedVehicle = async () => {
+        try {
+          const appointedVehicle = await getTransportByUserId(userId);
+          setVehicles(appointedVehicle)
+        } catch (error) {
+          console.log('Error loading appointed vehicle:', error);
+          throw error;
+        }
+      };
+      loadAppointedVehicle();
+    }
+    else {
+      console.log('Role undefined, failed to load vehicles.')
+    }
   }, []);
+
 
   const handleDeleteVehicle = async (id) => {
     await deleteTransportationVehicle(id);
@@ -80,7 +100,7 @@ const TransportationVehicleManagementComponent = () => {
       capacity: '',
       driverId: '',
       licencePlate: '',
-      img: '', // Reset image
+      img: '', 
     });
   };
 
@@ -153,10 +173,10 @@ const TransportationVehicleManagementComponent = () => {
               <TableCell>
                 {vehicle.img && (
                   <img
-                  src={`data:image/jpeg;base64,${vehicle.img}`}
-                  alt="Transportation Vehicle"
-                  style={{ width: 100, height: 100, objectFit: 'cover' }}
-                />
+                    src={renderImage(vehicle.img)}
+                    alt="Transportation Vehicle"
+                    style={{ width: 100, height: 100, objectFit: 'cover' }}
+                  />
                 )}
               </TableCell>
               <TableCell>

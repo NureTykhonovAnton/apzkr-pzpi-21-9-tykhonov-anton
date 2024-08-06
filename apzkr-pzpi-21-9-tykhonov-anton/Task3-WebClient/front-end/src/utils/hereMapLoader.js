@@ -1,21 +1,16 @@
 export const hereMapLoader = () => {
   return new Promise((resolve, reject) => {
-    // Check if the HERE Maps API is already loaded
     if (window.H && window.H.service && window.H.service.Platform) {
+      console.log('HERE Maps API already loaded');
       resolve(window.H);
       return;
     }
 
-    const coreScriptSrc = 'https://js.api.here.com/v3/3.1/mapsjs-core.js';
-    const serviceScriptSrc = 'https://js.api.here.com/v3/3.1/mapsjs-service.js';
-    const uiScriptSrc = 'https://js.api.here.com/v3/3.1/mapsjs-ui.js';
-    const eventsScriptSrc = 'https://js.api.here.com/v3/3.1/mapsjs-mapevents.js';
-
     const scripts = [
-      coreScriptSrc,
-      serviceScriptSrc,
-      uiScriptSrc,
-      eventsScriptSrc
+      'https://js.api.here.com/v3/3.1/mapsjs-core.js',
+      'https://js.api.here.com/v3/3.1/mapsjs-service.js',
+      'https://js.api.here.com/v3/3.1/mapsjs-ui.js',
+      'https://js.api.here.com/v3/3.1/mapsjs-mapevents.js'
     ];
 
     let currentScriptIndex = 0;
@@ -23,46 +18,37 @@ export const hereMapLoader = () => {
     const loadNextScript = () => {
       if (currentScriptIndex >= scripts.length) {
         if (window.H && window.H.service && window.H.service.Platform) {
+          console.log('All scripts loaded, HERE Maps API available');
           resolve(window.H);
         } else {
+          console.error('HERE Maps API did not load correctly');
           reject(new Error('HERE Maps API did not load correctly'));
         }
         return;
       }
 
       const scriptSrc = scripts[currentScriptIndex];
-
-      // Helper function to check if a script is already present in the document
-      const isScriptLoaded = (src) => {
-        return document.querySelector(`script[src="${src}"]`) !== null;
-      };
-
-      if (isScriptLoaded(scriptSrc)) {
-        console.log(`Script already loaded: ${scriptSrc}`);
-        currentScriptIndex++;
-        loadNextScript();
-        return;
-      }
+      console.log(`Loading script: ${scriptSrc}`);
 
       const script = document.createElement('script');
       script.src = scriptSrc;
       script.async = true;
 
       script.onload = () => {
-        console.log(`Loaded script: ${scriptSrc}`);
+        console.log(`Script loaded: ${scriptSrc}`);
         currentScriptIndex++;
         loadNextScript();
       };
 
       script.onerror = (error) => {
-        console.error('Script load error:', error);
-        reject(new Error(`Failed to load script: ${error.message}`));
+        console.error(`Failed to load script: ${scriptSrc}`, error);
+        reject(new Error(`Failed to load script: ${scriptSrc}`));
       };
 
-      console.log(`Appending script: ${scriptSrc}`);
       document.head.appendChild(script);
     };
 
     loadNextScript();
   });
+  
 };

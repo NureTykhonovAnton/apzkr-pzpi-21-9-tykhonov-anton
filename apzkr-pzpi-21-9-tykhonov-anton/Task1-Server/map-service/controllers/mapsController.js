@@ -4,20 +4,13 @@ const router = express.Router();
 const apiKey = process.env.APIKEY;
 const standardZoom = process.env.ZOOM
 
-router.post('/point', async(req,res) =>{
-  const { latitude, longitude } = req.body;
-
-  if(!apiKey) return res.status(404).json({error: 'Problem with Api Key'})
+router.get('/point', async(req,res) =>{
   
-    if (!latitude || !longitude) {
-    return res.status(400).json({ error: 'Latitude and longitude are required' });
-  }
+  if(!apiKey) return res.status(404).json({error: 'Problem with Api Key'})
 
   // Construct the necessary data for the client to render the map
   const mapData = {
     apikey: apiKey,
-    latitude: latitude,
-    longitude: longitude,
     zoom: standardZoom
   };
 
