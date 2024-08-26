@@ -1,30 +1,33 @@
-const UserLocation = require('../models/userLocation'); // Adjust the path based on your project structure
-const sequelize = require('../config/database');
+const { sequelize } = require('./config/database');
+const { UserLocation } = require('../models/userLocation'); // Adjust path as needed
 
-const seedUserLocations = async () => {
+async function seedUserLocation() {
+  const sampleLocations = [
+    {
+      userId: 1, // Ensure these userId values exist in your User table
+      longitude: 13.4050,
+      latitude: 52.5200,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      userId: 2, // Ensure these userId values exist in your User table
+      longitude: -0.1276,
+      latitude: 51.5074,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    // Add more sample data as needed
+  ];
+
   try {
-    const userLocations = [
-      {
-        userId: 1, // Replace with existing user ID
-        longitude: 45.1234,
-        latitude: 12.3456,
-      },
-      {
-        userId: 2, // Replace with another existing user ID
-        longitude: 46.789,
-        latitude: 11.234,
-      },
-      // Add more user locations as needed
-    ];
-
-    await UserLocation.sync({ force: true }); // This will drop the table and recreate it
-    await UserLocation.bulkCreate(userLocations);
-    console.log('User locations seeded successfully');
+    await UserLocation.bulkCreate(sampleLocations);
+    console.log('UserLocation table seeded successfully.');
   } catch (error) {
-    console.error('Error seeding user locations:', error);
+    console.error('Error seeding UserLocation table:', error);
   } finally {
-    sequelize.close(); // Close the database connection after seeding
+    await sequelize.close();
   }
-};
+}
 
-seedUserLocations();
+seedUserLocation();

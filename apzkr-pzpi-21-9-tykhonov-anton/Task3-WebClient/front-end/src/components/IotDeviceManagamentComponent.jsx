@@ -13,111 +13,54 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  Select,
-  MenuItem,
-  CircularProgress,
-  Alert,
+  ButtonGroup,
 } from '@mui/material';
 import {
   fetchIotDevices,
-  createIotDevice,
-  updateIotDevice,
   deleteIotDevice,
+  updateIotDevice,
 } from '../api/iotDeviceRequests';
-import { fetchIotSettings } from '../api/iotSettingsRequests';
+import { useTranslation } from 'react-i18next';
 
 const IoTDeviceManagementComponent = () => {
   const [devices, setDevices] = useState([]);
-  const [settings, setSettings] = useState([]);
-  const [newDevice, setNewDevice] = useState({ MACADDR: '', longitude: '', latitude: '', settingsId: '' });
-  const [editDevice, setEditDevice] = useState({ id: null, MACADDR: '', longitude: '', latitude: '', settingsId: '' });
-  const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentDevice, setCurrentDevice] = useState(null);
+  const { t } = useTranslation();
   useEffect(() => {
     const loadDevices = async () => {
-      setLoading(true);
-      try {
-        const devicesData = await fetchIotDevices();
-        setDevices(devicesData);
-      } catch (error) {
-        setError('Error fetching IoT devices.');
-      } finally {
-        setLoading(false);
-      }
+      const devicesData = await fetchIotDevices();
+      setDevices(devicesData);
     };
-
-    const loadSettings = async () => {
-      try {
-        const settingsData = await fetchIotSettings();
-        setSettings(settingsData);
-      } catch (error) {
-        setError('Error fetching IoT settings.');
-      }
-    };
-
     loadDevices();
-    loadSettings();
   }, []);
 
-  const handleCreateDevice = async () => {
-    const { MACADDR, longitude, latitude, settingsId } = newDevice;
-    if (!MACADDR || !longitude || !latitude || !settingsId) return;
-    setLoading(true);
-    try {
-      const createdDevice = await createIotDevice(newDevice);
-      setDevices([...devices, createdDevice]);
-      setNewDevice({ MACADDR: '', longitude: '', latitude: '', settingsId: '' });
-      setOpenAddDialog(false);
-    } catch (error) {
-      setError('Error creating IoT device.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateDevice = async () => {
-    const { id, MACADDR, longitude, latitude, settingsId } = editDevice;
-    if (!id || !MACADDR || !longitude || !latitude || !settingsId) return; // Ensure all fields are filled
-    setLoading(true);
-    try {
-      const updated = await updateIotDevice(id, { MACADDR, longitude, latitude, settingsId });
-      setDevices(devices.map(device => (device.id === id ? updated : device)));
-      setEditDevice({ id: null, MACADDR: '', longitude: '', latitude: '', settingsId: '' });
-      setOpenEditDialog(false);
-    } catch (error) {
-      setError('Error updating IoT device.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteDevice = async (id) => {
-    setLoading(true);
-    try {
-      await deleteIotDevice(id);
-      setDevices(devices.filter(device => device.id !== id));
-    } catch (error) {
-      setError('Error deleting IoT device.');
-    } finally {
-      setLoading(false);
-    }
+    await deleteIotDevice(id);
+    const devicesData = await fetchIotDevices();
+    setDevices(devicesData);
   };
 
-  const handleOpenAddDialog = () => {
-    setOpenAddDialog(true);
+  const handleOpenEditModal = (device) => {
+    setCurrentDevice(device);
+    setEditModalOpen(true);
   };
 
-  const handleOpenEditDialog = (device) => {
-    setEditDevice(device);
-    setOpenEditDialog(true);
+  const handleEditDevice = async () => {
+    await updateIotDevice(currentDevice.id, {
+      MACADDR: currentDevice.MACADDR,
+      gasLimit: currentDevice.gasLimit,
+      defaultZoneRaduis: currentDevice.defaultZoneRaduis,
+    });
+    const devicesData = await fetchIotDevices();
+    setDevices(devicesData);
+    setEditModalOpen(false);
+    setCurrentDevice(null);
   };
 
-  const handleChange = (e, setter) => {
-    const { name, value } = e.target;
-    setter(prev => ({ ...prev, [name]: value }));
+  const handleEditChange = (e) => {
+    setCurrentDevice({ ...currentDevice, [e.target.name]: e.target.value });
   };
 
   return (
@@ -125,168 +68,83 @@ const IoTDeviceManagementComponent = () => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>MAC Address</TableCell>
-            <TableCell>Longitude</TableCell>
-            <TableCell>Latitude</TableCell>
-            <TableCell>Settings</TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell>{t('mac_addr')}</TableCell>
+            <TableCell>{t('gas_limit')}</TableCell>
+            <TableCell>{t('zone_radius')}</TableCell>
+            <TableCell>{t('actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {loading ? (
-            <TableRow>
-              <TableCell colSpan={5} align="center">
-                <CircularProgress />
+          {devices.map((device) => (
+            <TableRow key={device.id}>
+              <TableCell>{device.MACADDR}</TableCell>
+              <TableCell>{device.gasLimit}</TableCell>
+              <TableCell>{device.defaultZoneRaduis}</TableCell>
+              <TableCell>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => handleDeleteDevice(device.id)}
+                >
+                  {t('delete')}
+                </Button>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleOpenEditModal(device)}
+                  style={{ marginLeft: 8 }}
+                >
+                  {t('edit')}
+                </Button>
               </TableCell>
             </TableRow>
-          ) : (
-            <>
-              {error && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    <Alert severity="error">{error}</Alert>
-                  </TableCell>
-                </TableRow>
-              )}
-              {devices.map(device => (
-                <TableRow key={device.id}>
-                  <TableCell>{device.MACADDR}</TableCell>
-                  <TableCell>{device.longitude}</TableCell>
-                  <TableCell>{device.latitude}</TableCell>
-                  <TableCell>{device.settings?.name || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => handleOpenEditDialog(device)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleDeleteDevice(device.id)}
-                      sx={{ ml: 1 }}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell colSpan={5} align="center">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleOpenAddDialog}
-                  >
-                    Add Device
-                  </Button>
-                </TableCell>
-              </TableRow>
-            </>
-          )}
+          ))}
         </TableBody>
       </Table>
 
-      {/* Add Device Dialog */}
-      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
-        <DialogTitle>Add Device</DialogTitle>
+      {/* Edit Device Modal */}
+      <Dialog
+        open={editModalOpen}
+        onClose={() => { setEditModalOpen(false); setCurrentDevice(null); }}
+      >
+        <DialogTitle>Edit IoT Device</DialogTitle>
         <DialogContent>
           <TextField
-            name="MACADDR"
             label="MAC Address"
-            value={newDevice.MACADDR}
-            onChange={(e) => handleChange(e, setNewDevice)}
+            name="MACADDR"
+            value={currentDevice?.MACADDR || ''}
+            onChange={handleEditChange}
             fullWidth
-            sx={{ mb: 1 }}
+            margin="dense"
           />
           <TextField
-            name="longitude"
-            label="Longitude"
-            value={newDevice.longitude}
-            onChange={(e) => handleChange(e, setNewDevice)}
+            label="Gas Limit"
+            name="gasLimit"
+            value={currentDevice?.gasLimit || ''}
+            onChange={handleEditChange}
             fullWidth
-            sx={{ mb: 1 }}
+            margin="dense"
           />
           <TextField
-            name="latitude"
-            label="Latitude"
-            value={newDevice.latitude}
-            onChange={(e) => handleChange(e, setNewDevice)}
+            label="Default Zone Radius"
+            name="defaultZoneRaduis"
+            value={currentDevice?.defaultZoneRaduis || ''}
+            onChange={handleEditChange}
             fullWidth
-            sx={{ mb: 1 }}
+            margin="dense"
           />
-          <Select
-            name="settingsId"
-            value={newDevice.settingsId}
-            onChange={(e) => handleChange(e, setNewDevice)}
-            fullWidth
-          >
-            {settings.map(setting => (
-              <MenuItem key={setting.id} value={setting.id}>
-                {setting.name}
-              </MenuItem>
-            ))}
-          </Select>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAddDialog(false)} color="secondary">
+          <Button onClick={() => { setEditModalOpen(false); setCurrentDevice(null); }}>
             Cancel
           </Button>
-          <Button onClick={handleCreateDevice} color="primary">
-            Add Device
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Edit Device Dialog */}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
-        <DialogTitle>Edit Device</DialogTitle>
-        <DialogContent>
-          <TextField
-            name="MACADDR"
-            label="MAC Address"
-            value={editDevice?.MACADDR || ''}
-            onChange={(e) => handleChange(e, setEditDevice)}
-            fullWidth
-            sx={{ mb: 1 }}
-          />
-          <TextField
-            name="longitude"
-            label="Longitude"
-            value={editDevice?.longitude || ''}
-            onChange={(e) => handleChange(e, setEditDevice)}
-            fullWidth
-            sx={{ mb: 1 }}
-          />
-          <TextField
-            name="latitude"
-            label="Latitude"
-            value={editDevice?.latitude || ''}
-            onChange={(e) => handleChange(e, setEditDevice)}
-            fullWidth
-            sx={{ mb: 1 }}
-          />
-          <Select
-            name="settingsId"
-            value={editDevice?.settingsId || ''}
-            onChange={(e) => handleChange(e, setEditDevice)}
-            fullWidth
+          <Button
+            onClick={handleEditDevice}
+            color="primary"
           >
-            {settings.map(setting => (
-              <MenuItem key={setting.id} value={setting.id}>
-                {setting.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditDialog(false)} color="secondary">
-            Cancel
-          </Button>
-          <Button onClick={handleUpdateDevice} color="primary">
-            Save Changes
+            Save
           </Button>
         </DialogActions>
       </Dialog>

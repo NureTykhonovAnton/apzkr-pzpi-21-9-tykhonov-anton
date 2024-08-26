@@ -2,24 +2,43 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Zone = require('./zone');
 const Center = require('./center');
-const Emergency = require('./emergency');
+const User = require('./user');
 
 const Evacuation = sequelize.define('Evacuation', {
-  zoneStart: {
+  // Foreign key to Zone for the start location
+  startZoneId: {
     type: DataTypes.INTEGER,
+    references: {
+      model: Zone,
+      key: 'id',
+    },
+    allowNull: true,
+  },
+  
+  // Foreign key to Center for the destination
+  endCenterId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Center,
+      key: 'id',
+    },
     allowNull: false,
   },
-  centerEnd: {
+  
+  // Foreign key to User for the person responsible for the evacuation
+  userId: {
     type: DataTypes.INTEGER,
+    references: {
+      model: User,
+      key: 'id',
+    },
     allowNull: false,
   },
-  emergencyId:{
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  }
 });
 
-Evacuation.belongsTo(Zone, { foreignKey: 'zoneStart', as: 'startZone' });
-Evacuation.belongsTo(Center, { foreignKey: 'centerEnd', as: 'endCenter' });
-Evacuation.belongsTo(Emergency,{foreignKey: 'emergencyId', as: 'emergency'});
+// Define associations
+Evacuation.belongsTo(Zone, { foreignKey: 'startZoneId', as: 'startZone' });
+Evacuation.belongsTo(Center, { foreignKey: 'endCenterId', as: 'endCenter' });
+Evacuation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 module.exports = Evacuation;

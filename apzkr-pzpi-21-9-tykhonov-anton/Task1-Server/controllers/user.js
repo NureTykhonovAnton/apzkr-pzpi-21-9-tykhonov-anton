@@ -1,55 +1,62 @@
 const express = require('express');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user');
-const Role = require('../models/role');
 const { hashPassword, comparePassword, generateToken } = require('../middlewares/authMiddleware');
 const router = express.Router();
 const { verifyToken } = require('../middlewares/authMiddleware');
 const jwt = require('jsonwebtoken');
-
 require('dotenv').config();
 
 const secretKey = process.env.JWT_SECRET_KEY;
 
-
-
+// CREATE a new user
 router.post('/', asyncHandler(async (req, res) => {
-  const { username, password, roleId } = req.body;
+  const { username, password, role, email, img, longitude, latitude } = req.body;
+
+  // Basic validation
+  if (!username || !password || !email || !role) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
 
   const hashedPassword = await hashPassword(password);
 
   const user = await User.create({
     username,
     password: hashedPassword,
-    roleId,
+    role,
+    email,
+    img,
+    longitude,
+    latitude,
   });
 
   res.status(201).json(user);
 }));
 
+// GET all users (requires token)
 router.get('/', verifyToken, asyncHandler(async (req, res) => {
   try {
-    const users = await User.findAll({
-      include: {
-        model: Role,
-        as: 'role',
-      },
-    });
+    const users = await User.findAll();
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }));
 
+// UPDATE user by ID (requires token)
 router.put('/:id', verifyToken, asyncHandler(async (req, res) => {
-  const { username, password, roleId } = req.body;
+  const { username, password, role, img, email, longitude, latitude } = req.body;
   const user = await User.findByPk(req.params.id);
 
   if (user) {
     await user.update({
-      username,
+      username: username || user.username,
       password: password ? await hashPassword(password) : user.password,
-      roleId,
+      role: role || user.role,
+      email: email || user.email,
+      img: img || user.img,
+      longitude: longitude || user.longitude,
+      latitude: latitude || user.latitude,
     });
     res.status(200).json(user);
   } else {
@@ -57,6 +64,7 @@ router.put('/:id', verifyToken, asyncHandler(async (req, res) => {
   }
 }));
 
+// DELETE user by ID (requires token)
 router.delete('/:id', verifyToken, asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.params.id);
   if (user) {
@@ -67,9 +75,16 @@ router.delete('/:id', verifyToken, asyncHandler(async (req, res) => {
   }
 }));
 
+// LOGIN a user
 router.post('/login', asyncHandler(async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ where: { username }, include: { model: Role, as: 'role' } });
+
+  // Basic validation
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  const user = await User.findOne({ where: { username } });
 
   if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
@@ -83,60 +98,38 @@ router.post('/login', asyncHandler(async (req, res) => {
   const token = generateToken(user);
   res.status(200).json({ token, user });
 }));
-// КАКИМ ОБРАЗОМ ОН ПЕРЕКРЫВАЕТ /data????
-// router.get('/:id', verifyToken, asyncHandler(async (req, res) => {
-//   const user = await User.findByPk(req.params.id, { include: { model: Role, as: 'role' } });
-//   if (user) {
-//     res.status(200).json(user);
-//   } else {
-//     res.status(404).json({ error: 'User not found' });
-//   }
-// }));
 
-router.get('/data', asyncHandler(async (req, res) => {
+// GET user data by token (using '/data' route)
+router.get('/data', verifyToken, asyncHandler(async (req, res) => {
   const authHeader = req.headers.authorization;
-  console.log('Authorization Header:', authHeader);
 
+  // Ensure authorization header is provided
   if (!authHeader) {
-    console.log('No token provided');
     return res.status(401).json({ error: 'No token provided' });
   }
 
-  const token = authHeader && authHeader.split(' ')[1];
-  console.log('Token:', token);
+  // Split and extract the token from the authorization header
+  const token = authHeader.split(' ')[1];
   if (!token) {
-    console.log('Token is malformed or missing');
     return res.status(401).json({ error: 'Token is malformed or missing' });
   }
 
-  jwt.verify(token, secretKey, async (err, decoded) => {
-    if (err) {
-      console.error('Token verification error:', err);
-      return res.status(401).json({ error: 'Failed to authenticate token' });
+  try {
+    // Verify the token and extract user ID
+    const decoded = jwt.verify(token, secretKey);
+    const userId = parseInt(decoded.id, 10);
+
+    // Fetch user details using the ID from the token
+    const user = await User.findOne({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'No user found' });
     }
 
-    try {
-      console.log('Decoded Token:', decoded);
-      const userId = parseInt(decoded.id, 10); // Преобразование в число
-      if (isNaN(userId)) {
-        console.log('Invalid user ID');
-        return res.status(400).json({ error: 'Invalid user ID' });
-      }
-      const user = await User.findOne({ where: { id: userId }, include: { model: Role, as: 'role' } });
-      if (!user) {
-        console.log('No user found');
-        return res.status(404).json({ error: 'No user found' });
-      }
-      res.status(200).json(user);
-      console.log('User found:', user);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      return res.status(500).json({ error: 'Error fetching user' });
-    }
-  });
-
-
-
+    // Return user details
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(401).json({ error: 'Failed to authenticate token' });
+  }
 }));
 
 module.exports = router;

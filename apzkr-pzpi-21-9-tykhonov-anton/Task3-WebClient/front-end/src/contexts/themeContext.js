@@ -73,21 +73,28 @@ const darkTheme = createTheme({
   },
 });
 
+// Create a Context for managing the theme
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
+  // Using cookies to persist the theme mode
   const [cookies, setCookie] = useCookies(['themeMode']);
-  const [mode, setMode] = useState(cookies.themeMode || 'light');
+  const [mode, setMode] = useState(cookies.themeMode || 'light'); // Default to 'light' if no cookie is set
 
-  // Update the cookie when the mode changes
+  // Update the cookie whenever the theme mode changes
   useEffect(() => {
-    setCookie('themeMode', mode, { path: '/', expires: new Date(new Date().getTime() + 365*24*60*60*1000) });
+    setCookie('themeMode', mode, {
+      path: '/',
+      expires: new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000), // Cookie expires in 1 year
+    });
   }, [mode, setCookie]);
 
+  // Toggle between light and dark mode
   const toggleTheme = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    setMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
+  // Select the appropriate theme based on the current mode
   const theme = mode === 'light' ? lightTheme : darkTheme;
 
   return (
@@ -101,4 +108,5 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
+// Custom hook to use the theme context
 export const useTheme = () => useContext(ThemeContext);

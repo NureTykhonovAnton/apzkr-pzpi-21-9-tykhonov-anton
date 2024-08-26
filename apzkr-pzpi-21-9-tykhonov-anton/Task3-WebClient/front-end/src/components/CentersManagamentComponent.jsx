@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Container, Box, Table, TableBody, TableCell, TableHead, TableRow, Typography, Dialog, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Alert } from '@mui/material';
+import { Button, Container, Box, Table, TableBody, TableCell, TableHead, TableRow, Typography, Dialog, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Alert, ButtonGroup } from '@mui/material';
 import { fetchCenters, createCenter, updateCenter, deleteCenter } from '../api/centerRequests'; // Убедитесь, что путь верный
+import { useTranslation } from 'react-i18next';
 
 
 const CenterManagementComponent = () => {
@@ -11,6 +12,7 @@ const CenterManagementComponent = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { t } = useTranslation()
 
   useEffect(() => {
     const loadCenters = async () => {
@@ -84,7 +86,7 @@ const CenterManagementComponent = () => {
       <Container maxWidth="md">
         <Box sx={{ mt: 4 }}>
           <Typography variant="h4" align="center" gutterBottom>
-            Centers
+            {t('centers')}
           </Typography>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -101,10 +103,10 @@ const CenterManagementComponent = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Longitude</TableCell>
-                    <TableCell>Latitude</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>{t('name')}</TableCell>
+                    <TableCell>{t('longitude')}</TableCell>
+                    <TableCell>{t('latitude')}</TableCell>
+                    <TableCell>{t('actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -115,12 +117,14 @@ const CenterManagementComponent = () => {
                       <TableCell>{center.longitude}</TableCell>
                       <TableCell>{center.latitude}</TableCell>
                       <TableCell>
-                        <Button variant="contained" color="secondary" onClick={() => handleDeleteCenter(center.id)} >
-                          Delete
-                        </Button>
-                        <Button variant="contained" color="primary" onClick={() => handleEditClick(center)} sx={{ ml: 1 }}>
-                          Edit
-                        </Button>
+                        <ButtonGroup orientation='vertical'>
+                          <Button variant="contained" color="secondary" onClick={() => handleDeleteCenter(center.id)} >
+                            {t('delete')}
+                          </Button>
+                          <Button variant="contained" color="primary" onClick={() => handleEditClick(center)} sx={{ ml: 1 }}>
+                            {t('edit')}
+                          </Button>
+                        </ButtonGroup>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -132,7 +136,7 @@ const CenterManagementComponent = () => {
                         onClick={() => setModalOpen(true)}
                         fullWidth
                       >
-                        Add Center
+                        {t('add_center')}
                       </Button>
                     </TableCell>
                   </TableRow>

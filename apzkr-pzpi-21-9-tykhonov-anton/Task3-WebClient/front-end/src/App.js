@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import WelcomePage from './pages/WelcomePage';
 import UserPage from './pages/UserPage';
 import AdminPage from './pages/AdminPage';
-import Header from './components/HeaderComponents/Header';
+import Header from './components/ControlComponents/Header';
 import CookieBanner from './components/CookieBanner';
 import { AuthProvider } from './contexts/authContext';
 import { I18nextProvider } from 'react-i18next';
@@ -35,7 +35,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<WelcomePage />} />
             <Route path="/user-page" element={<UserPage currentComponent={currentComponent} setCurrentComponent={setCurrentComponent} drawerOpen={drawerOpen} toggleDrawer={toggleDrawer} />} />
-            <Route path="/admin-page" element={<AdminPage />} />
+            <Route path="/admin-page" element={<AdminPage currentComponent={currentComponent} setCurrentComponent={setCurrentComponent} drawerOpen={drawerOpen} toggleDrawer={toggleDrawer}  />} />
           </Routes>
         </AuthProvider>
       </Router>

@@ -1,271 +1,341 @@
 import React, { useState, useEffect } from 'react';
-import { fetchZones, createZone, updateZone, deleteZone } from '../api/zoneRequests'; // Обновите путь к API
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, CircularProgress, Alert } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-
-const theme = createTheme();
+import { fetchZones, createZone, updateZone, deleteZone } from '../api/zoneRequests';
+import { fetchEmergencyTypes } from '../api/emergencyTypeRequests';
+import {
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
+  Button, TextField, Dialog, DialogContentText, DialogTitle, ButtonGroup,
+  MenuItem, Select, InputLabel, FormControl, DialogContent, DialogActions
+} from '@mui/material';
+import { useAuth } from '../contexts/authContext';
+import { useTranslation } from 'react-i18next';
 
 const ZoneManagementComponent = () => {
   const [zones, setZones] = useState([]);
-  const [newZone, setNewZone] = useState({ name: '', longitude: '', latitude: '', radius: '' });
+  const [emergencyTypes, setEmergencyTypes] = useState([]);
+  const [newZone, setNewZone] = useState({ startedAt: '', endedAt: '', emergencyTypeId: '', name: '', latitude: '', longitude: '', radius: '' });
   const [editZone, setEditZone] = useState(null);
-  const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [zoneToDelete, setZoneToDelete] = useState(null);
+  const { user } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const loadZones = async () => {
-      setLoading(true);
       try {
-        const zonesData = await fetchZones();
-        setZones(zonesData);
+        const data = await fetchZones();
+        setZones(data);
       } catch (error) {
-        setError('Error fetching zones.');
-      } finally {
-        setLoading(false);
+        console.error('Error fetching zones:', error);
+      }
+    };
+
+    const loadEmergencyTypes = async () => {
+      try {
+        const typesData = await fetchEmergencyTypes();
+        setEmergencyTypes(typesData);
+      } catch (error) {
+        console.error('Error fetching emergency types:', error);
       }
     };
 
     loadZones();
+    loadEmergencyTypes();
   }, []);
 
   const handleCreateZone = async () => {
-    const { name, longitude, latitude, radius } = newZone;
-    if (!name || !longitude || !latitude || !radius) return; // Ensure all fields are filled
-    setLoading(true);
+    if (!newZone.startedAt || !newZone.emergencyTypeId || !newZone.name) return;
     try {
       const createdZone = await createZone(newZone);
       setZones([...zones, createdZone]);
-      setNewZone({ name: '', longitude: '', latitude: '', radius: '' }); // Clear input fields
-      setOpenAddDialog(false);
+      setNewZone({ startedAt: '', endedAt: '', emergencyTypeId: '', name: '', latitude: '', longitude: '', radius: '' });
     } catch (error) {
-      setError('Error creating zone.');
-    } finally {
-      setLoading(false);
+      console.error('Error creating zone:', error);
     }
   };
 
   const handleUpdateZone = async () => {
-    if (!editZone || !editZone.name || !editZone.longitude || !editZone.latitude || !editZone.radius) return; // Ensure all fields are filled
-    setLoading(true);
+    if (!editZone || !editZone.startedAt || !editZone.emergencyTypeId || !editZone.name) return;
     try {
       const updated = await updateZone(editZone.id, editZone);
       setZones(zones.map(zone => (zone.id === editZone.id ? updated : zone)));
       setEditZone(null);
       setOpenEditDialog(false);
     } catch (error) {
-      setError('Error updating zone.');
-    } finally {
-      setLoading(false);
+      console.error('Error updating zone:', error);
     }
   };
 
-  const handleDeleteZone = async (id) => {
-    setLoading(true);
+  const handleDeleteZone = async () => {
+    if (!zoneToDelete) return;
     try {
-      await deleteZone(id);
-      setZones(zones.filter(zone => zone.id !== id));
+      await deleteZone(zoneToDelete.id);
+      setZones(zones.filter(zone => zone.id !== zoneToDelete.id));
+      setOpenDeleteDialog(false);
     } catch (error) {
-      setError('Error deleting zone.');
-    } finally {
-      setLoading(false);
+      console.error('Error deleting zone:', error);
     }
   };
 
-  const handleOpenAddDialog = () => {
-    setOpenAddDialog(true);
-  };
-
-  const handleOpenEditDialog = (zone) => {
+  const handleEditClick = (zone) => {
     setEditZone(zone);
     setOpenEditDialog(true);
   };
 
-  const handleChange = (e, setter) => {
+  const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setter(prev => ({ ...prev, [name]: value }));
+    setEditZone({ ...editZone, [name]: value });
+  };
+
+  const handleDeleteClick = (zone) => {
+    setZoneToDelete(zone);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false);
+    setEditZone(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+    setZoneToDelete(null);
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <TableContainer component={Paper} sx={{ mt: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Longitude</TableCell>
-              <TableCell>Latitude</TableCell>
-              <TableCell>Radius</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : (
-              <>
-                {error && (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <Alert severity="error">{error}</Alert>
-                    </TableCell>
-                  </TableRow>
-                )}
-                {zones.map(zone => (
-                  <TableRow key={zone.id}>
-                    <TableCell>{zone.id}</TableCell>
-                    <TableCell>{zone.name}</TableCell>
-                    <TableCell>{zone.longitude}</TableCell>
-                    <TableCell>{zone.latitude}</TableCell>
-                    <TableCell>{zone.radius}</TableCell>
-                    <TableCell>
-                      <Button
-                        aria-label="edit"
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleOpenEditDialog(zone)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        aria-label="delete"
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleDeleteZone(zone.id)}
-                        sx={{ ml: 1 }}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
+    <TableContainer component={Paper} fullWidth>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell align='center'>ID</TableCell>
+            <TableCell align='center'>{t('started_at')}</TableCell>
+            <TableCell align='center'>{t('ended_at')}</TableCell>
+            <TableCell align='center'>{t('type')}</TableCell>
+            <TableCell align='center'>{t('name')}</TableCell>
+            <TableCell align='center'>{t('latitude')}</TableCell>
+            <TableCell align='center'>{t('longitude')}</TableCell>
+            <TableCell align='center'>{t('radius')}</TableCell>
+            {user.role.toLowerCase() === 'admin' && (<TableCell align='center'>{t('actions')}</TableCell>)}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {zones.map(zone => (
+            <TableRow key={zone.id}>
+              <TableCell align='center'>{zone.id}</TableCell>
+              <TableCell align='center'>{new Date(zone.startedAt).toLocaleString()}</TableCell>
+              <TableCell align='center'>{zone.endedAt ? new Date(zone.endedAt).toLocaleString() : 'N/A'}</TableCell>
+              <TableCell align='center'>{emergencyTypes.find(type => type.id === zone.emergencyTypeId)?.name}</TableCell>
+              <TableCell align='center'>{zone.name}</TableCell>
+              <TableCell align='center'>{zone.latitude}</TableCell>
+              <TableCell align='center'>{zone.longitude}</TableCell>
+              <TableCell align='center'>{zone.radius}</TableCell>
+              {user.role.toLowerCase() === 'admin' && (
+                <TableCell align='center'>
+                  <ButtonGroup orientation="vertical" variant="contained" aria-label="Basic button group">
                     <Button
+                      aria-label="edit"
                       variant="contained"
-                      color="primary"
-                      onClick={handleOpenAddDialog}
+                      color="secondary"
+                      fullWidth
+                      onClick={() => handleEditClick(zone)}
                     >
-                      Add Zone
+                      {t('edit')}
                     </Button>
-                  </TableCell>
-                </TableRow>
-              </>
-            )}
-          </TableBody>
-        </Table>
+                    <Button
+                      aria-label="delete"
+                      variant="contained"
+                      fullWidth
+                      color="primary"
+                      onClick={() => handleDeleteClick(zone)}
+                    >
+                      {t('delete')}
 
-        {/* Add Zone Dialog */}
-        <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
-          <DialogTitle>Add Zone</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Enter the details of the new zone.
-            </DialogContentText>
-            <TextField
-              name="name"
-              label="Name"
-              value={newZone.name}
-              onChange={(e) => handleChange(e, setNewZone)}
-              fullWidth
-              sx={{ mb: 1 }}
-            />
-            <TextField
-              name="longitude"
-              label="Longitude"
-              type="number"
-              value={newZone.longitude}
-              onChange={(e) => handleChange(e, setNewZone)}
-              fullWidth
-              sx={{ mb: 1 }}
-            />
-            <TextField
-              name="latitude"
-              label="Latitude"
-              type="number"
-              value={newZone.latitude}
-              onChange={(e) => handleChange(e, setNewZone)}
-              fullWidth
-              sx={{ mb: 1 }}
-            />
-            <TextField
-              name="radius"
-              label="Radius"
-              type="number"
-              value={newZone.radius}
-              onChange={(e) => handleChange(e, setNewZone)}
-              fullWidth
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenAddDialog(false)} color="secondary">
-              Cancel
-            </Button>
-            <Button onClick={handleCreateZone} color="primary">
-              Add Zone
-            </Button>
-          </DialogActions>
-        </Dialog>
+                    </Button>
+                  </ButtonGroup>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+          <TableRow>
+            <TableCell colSpan={2} align='center'>
+              <TextField
+                label="Started At"
+                type="datetime-local"
+                name="startedAt"
+                value={newZone.startedAt}
+                onChange={(e) => setNewZone({ ...newZone, startedAt: e.target.value })}
+                fullWidth
+              />
+            </TableCell>
+            <TableCell align='center'>
+              <TextField
+                label="Ended At"
+                type="datetime-local"
+                name="endedAt"
+                value={newZone.endedAt}
+                onChange={(e) => setNewZone({ ...newZone, endedAt: e.target.value })}
+                fullWidth
+              />
+            </TableCell>
+            <TableCell align='center'>
+              <FormControl fullWidth>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  name="emergencyTypeId"
+                  value={newZone.emergencyTypeId}
+                  onChange={(e) => setNewZone({ ...newZone, emergencyTypeId: e.target.value })}
+                >
+                  {emergencyTypes.map(type => (
+                    <MenuItem key={type.id} value={type.id}>
+                      {type.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </TableCell>
+            <TableCell align='center'>
+              <TextField
+                label="Name"
+                name="name"
+                value={newZone.name}
+                onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
+                fullWidth
+              />
+            </TableCell>
+            <TableCell align='center'>
+              <TextField
+                label="Latitude"
+                name="latitude"
+                value={newZone.latitude}
+                onChange={(e) => setNewZone({ ...newZone, latitude: e.target.value })}
+                fullWidth
+              />
+            </TableCell>
+            <TableCell align='center'>
+              <TextField
+                label="Longitude"
+                name="longitude"
+                value={newZone.longitude}
+                onChange={(e) => setNewZone({ ...newZone, longitude: e.target.value })}
+                fullWidth
+              />
+            </TableCell>
+            <TableCell align='center'>
+              <TextField
+                label="Radius"
+                name="radius"
+                value={newZone.radius}
+                onChange={(e) => setNewZone({ ...newZone, radius: e.target.value })}
+                fullWidth
+              />
+            </TableCell>
+            <TableCell align='center'>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCreateZone}
+              >
+                {t('create')}
+              </Button>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
 
-        {/* Edit Zone Dialog */}
-        <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
-          <DialogTitle>Edit Zone</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Update the details of the zone.
+      {/* Edit Zone Dialog */}
+      <Dialog open={openEditDialog} onClose={handleCloseEditDialog}>
+        <DialogTitle>{t('edit')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ my: 1 }}>
+            {t('edit')} {t('details')}
+          </DialogContentText>
+          <TextField sx={{ my: 1 }}
+            label="Started At"
+            type="datetime-local"
+            name="startedAt"
+            value={editZone?.startedAt || ''}
+            onChange={handleEditChange}
+            fullWidth
+          />
+          <TextField sx={{ my: 1 }}
+            label="Ended At"
+            type="datetime-local"
+            name="endedAt"
+            value={editZone?.endedAt || ''}
+            onChange={handleEditChange}
+            fullWidth
+          />
+          <FormControl fullWidth sx={{ my: 1 }}>
+            <InputLabel>{t('type')}</InputLabel>
+            <Select
+              name="emergencyTypeId"
+              value={editZone?.emergencyTypeId || ''}
+              onChange={handleEditChange}
+            >
+              {emergencyTypes.map(type => (
+                <MenuItem key={type.id} value={type.id}>
+                  {type.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField sx={{ my: 1 }}
+            label="Name"
+            name="name"
+            value={editZone?.name || ''}
+            onChange={handleEditChange}
+            fullWidth
+          />
+          <TextField sx={{ my: 1 }}
+            label="Latitude"
+            name="latitude"
+            value={editZone?.latitude || ''}
+            onChange={handleEditChange}
+            fullWidth
+          />
+          <TextField sx={{ my: 1 }}
+            label="Longitude"
+            name="longitude"
+            value={editZone?.longitude || ''}
+            onChange={handleEditChange}
+            fullWidth
+          />
+          <TextField sx={{ my: 1 }}
+            label="Radius"
+            name="radius"
+            value={editZone?.radius || ''}
+            onChange={handleEditChange}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditDialog} color="secondary">
+            {t('cancel')}
+          </Button>
+          <Button onClick={handleUpdateZone} color="primary">
+            {t('save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Zone Confirmation Dialog */}
+      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>{t('delete')}  {t('zone')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t('delete')}  ?        
             </DialogContentText>
-            <TextField
-              name="name"
-              label="Name"
-              value={editZone?.name || ''}
-              onChange={(e) => handleChange(e, setEditZone)}
-              fullWidth
-              sx={{ mb: 1 }}
-            />
-            <TextField
-              name="longitude"
-              label="Longitude"
-              type="number"
-              value={editZone?.longitude || ''}
-              onChange={(e) => handleChange(e, setEditZone)}
-              fullWidth
-              sx={{ mb: 1 }}
-            />
-            <TextField
-              name="latitude"
-              label="Latitude"
-              type="number"
-              value={editZone?.latitude || ''}
-              onChange={(e) => handleChange(e, setEditZone)}
-              fullWidth
-              sx={{ mb: 1 }}
-            />
-            <TextField
-              name="radius"
-              label="Radius"
-              type="number"
-              value={editZone?.radius || ''}
-              onChange={(e) => handleChange(e, setEditZone)}
-              fullWidth
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenEditDialog(false)} color="secondary">
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateZone} color="primary">
-              Update Zone
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </TableContainer>
-    </ThemeProvider>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} color="secondary">
+            {t('cancel')}
+          </Button>
+          <Button onClick={handleDeleteZone} color="primary">
+          {t('delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </TableContainer>
   );
 };
 

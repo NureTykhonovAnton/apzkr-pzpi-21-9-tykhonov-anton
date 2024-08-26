@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { fetchEmergencyTypes, createEmergencyType, updateEmergencyType, deleteEmergencyType } from '../api/emergencyTypeRequests';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, ButtonGroup } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const EmergencyTypeManagementComponent = () => {
   const [emergencyTypes, setEmergencyTypes] = useState([]);
   const [newEmergencyType, setNewEmergencyType] = useState({ name: '', description: '' });
   const [editEmergencyType, setEditEmergencyType] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const {t} = useTranslation();
 
   useEffect(() => {
     const loadEmergencyTypes = async () => {
@@ -68,9 +70,9 @@ const EmergencyTypeManagementComponent = () => {
         <TableHead>
           <TableRow>
             <TableCell>ID</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell>{t('name')}</TableCell>
+            <TableCell>{t('description')}</TableCell>
+            <TableCell>{t('actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -80,52 +82,54 @@ const EmergencyTypeManagementComponent = () => {
               <TableCell>{type.name}</TableCell>
               <TableCell>{type.description}</TableCell>
               <TableCell>
-                <Button 
-                  aria-label="edit" 
-                  variant="contained" 
-                  color="secondary" 
-                  onClick={() => handleEditClick(type)}
-                >
-                  Edit
-                </Button>
-                <Button 
-                  aria-label="delete" 
-                  variant="contained" 
-                  color="primary" 
-                  onClick={() => handleDeleteEmergencyType(type.id)}
-                  sx={{ ml: 1 }}
-                >
-                  Delete
-                </Button>
+                <ButtonGroup orientation='vertical'>
+                  <Button
+                    aria-label="edit"
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleEditClick(type)}
+                  >
+                    {t('edit')}
+                  </Button>
+                  <Button
+                    aria-label="delete"
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleDeleteEmergencyType(type.id)}
+                    sx={{ ml: 1 }}
+                  >
+                    {t('delete')}
+                  </Button>
+                </ButtonGroup>
               </TableCell>
             </TableRow>
           ))}
           <TableRow>
             <TableCell colSpan={2}>
-              <TextField 
-                label="Name" 
+              <TextField
+                label={t('name')}
                 name="name"
-                value={newEmergencyType.name} 
-                onChange={(e) => setNewEmergencyType({ ...newEmergencyType, name: e.target.value })} 
-                fullWidth 
+                value={newEmergencyType.name}
+                onChange={(e) => setNewEmergencyType({ ...newEmergencyType, name: e.target.value })}
+                fullWidth
               />
             </TableCell>
             <TableCell>
-              <TextField 
-                label="Description" 
+              <TextField
+                label={t('description')}
                 name="description"
-                value={newEmergencyType.description} 
-                onChange={(e) => setNewEmergencyType({ ...newEmergencyType, description: e.target.value })} 
-                fullWidth 
+                value={newEmergencyType.description}
+                onChange={(e) => setNewEmergencyType({ ...newEmergencyType, description: e.target.value })}
+                fullWidth
               />
             </TableCell>
             <TableCell>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={handleCreateEmergencyType}
               >
-                Create Type
+                {t('create_type')}
               </Button>
             </TableCell>
           </TableRow>
@@ -139,19 +143,19 @@ const EmergencyTypeManagementComponent = () => {
           <DialogContentText>
             Update the details of the emergency type.
           </DialogContentText>
-          <TextField 
-            label="Name" 
+          <TextField
+            label="Name"
             name="name"
-            value={editEmergencyType?.name || ''} 
-            onChange={handleEditChange} 
-            fullWidth 
+            value={editEmergencyType?.name || ''}
+            onChange={handleEditChange}
+            fullWidth
           />
-          <TextField 
-            label="Description" 
+          <TextField
+            label="Description"
             name="description"
-            value={editEmergencyType?.description || ''} 
-            onChange={handleEditChange} 
-            fullWidth 
+            value={editEmergencyType?.description || ''}
+            onChange={handleEditChange}
+            fullWidth
           />
         </DialogContent>
         <DialogActions>

@@ -1,8 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const EmergencyType = require('../models/emergencyType');
+/**
+ * @module emergencyTypes
+ */
 
-// GET all emergency types
+/**
+ * @route GET /emergency-types
+ * @desc Retrieve all emergency types
+ * @access Public
+ * @returns {Object[]} Array of emergency type objects
+ * @throws {500} Server Error
+ */
 router.get('/', async (req, res) => {
   try {
     const emergencyTypes = await EmergencyType.findAll();
@@ -13,7 +22,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET emergency type by ID
+/**
+ * @route GET /emergency-types/:id
+ * @desc Retrieve an emergency type by its ID
+ * @param {string} id - The ID of the emergency type to retrieve
+ * @access Public
+ * @returns {Object} Emergency type object
+ * @throws {404} Not Found - Emergency Type not found
+ * @throws {500} Server Error
+ */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -28,7 +45,16 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// CREATE a new emergency type
+/**
+ * @route POST /emergency-types
+ * @desc Create a new emergency type
+ * @param {Object} req.body - Emergency type data
+ * @param {string} req.body.name - Name of the emergency type
+ * @param {string} req.body.description - Description of the emergency type
+ * @access Public
+ * @returns {Object} Newly created emergency type object
+ * @throws {500} Server Error
+ */
 router.post('/', async (req, res) => {
   const { name, description } = req.body;
   try {
@@ -40,7 +66,18 @@ router.post('/', async (req, res) => {
   }
 });
 
-// UPDATE emergency type by ID
+/**
+ * @route PUT /emergency-types/:id
+ * @desc Update an emergency type by its ID
+ * @param {string} id - The ID of the emergency type to update
+ * @param {Object} req.body - Updated emergency type data
+ * @param {string} req.body.name - Updated name of the emergency type
+ * @param {string} req.body.description - Updated description of the emergency type
+ * @access Public
+ * @returns {Object} Updated emergency type object
+ * @throws {404} Not Found - Emergency Type not found
+ * @throws {500} Server Error
+ */
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
@@ -59,7 +96,15 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE emergency type by ID
+/**
+ * @route DELETE /emergency-types/:id
+ * @desc Delete an emergency type by its ID
+ * @param {string} id - The ID of the emergency type to delete
+ * @access Public
+ * @returns {Object} Success message
+ * @throws {404} Not Found - Emergency Type not found
+ * @throws {500} Server Error
+ */
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {

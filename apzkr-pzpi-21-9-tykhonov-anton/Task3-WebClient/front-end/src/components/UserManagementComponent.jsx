@@ -1,30 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { fetchUsers, deleteUser, createUser, updateUser } from '../api/userRequests';
-import { fetchRoles } from '../api/roleRequests';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
+import { Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, ButtonGroup } from '@mui/material';
+import useGeolocation from '../utils/useGeolocation';
+import { useTranslation } from 'react-i18next';
 
 const UserManagementComponent = () => {
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [newUser, setNewUser] = useState({ username: '', password: '', roleId: '' });
-
+  const { latitude, longitude } = useGeolocation();
+  const [newUser, setNewUser] = useState({ username: '', email: '', img: null, password: '', role: '', latitude, longitude });
+  const { t } = useTranslation();
   useEffect(() => {
-    const loadUsersAndRoles = async () => {
+    const loadUsers = async () => {
       try {
         const usersData = await fetchUsers();
         setUsers(usersData);
-        
-        const rolesData = await fetchRoles();
-        setRoles(rolesData);
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading users:', error);
       }
     };
 
-    loadUsersAndRoles();
+    loadUsers();
   }, []);
 
   const handleDeleteUser = async (id) => {
@@ -39,11 +37,22 @@ const UserManagementComponent = () => {
 
   const handleAddUser = async () => {
     try {
-      await createUser(newUser);
+      const formData = new FormData();
+      formData.append('username', newUser.username);
+      formData.append('email', newUser.email);
+      formData.append('role', newUser.role);
+      formData.append('password', newUser.password);
+      formData.append('latitude', newUser.latitude);
+      formData.append('longitude', newUser.longitude);
+      if (newUser.img) {
+        formData.append('img', newUser.img);
+      }
+
+      await createUser(formData);
       const usersData = await fetchUsers();
       setUsers(usersData);
       setModalOpen(false);
-      setNewUser({ username: '', password: '', roleId: '' });
+      setNewUser({ username: '', email: '', password: '', img: null, role: '', latitude, longitude });
     } catch (error) {
       console.error('Error adding user:', error);
     }
@@ -57,7 +66,18 @@ const UserManagementComponent = () => {
   const handleEditUser = async () => {
     if (currentUser) {
       try {
-        await updateUser(currentUser.id, currentUser);
+        const formData = new FormData();
+        formData.append('username', currentUser.username);
+        formData.append('password', currentUser.password);
+        formData.append('email', currentUser.email);
+        formData.append('role', currentUser.role);
+        formData.append('latitude', currentUser.latitude);
+        formData.append('longitude', currentUser.longitude);
+        if (currentUser.img) {
+          formData.append('img', currentUser.img);
+        }
+
+        await updateUser(currentUser.id, formData);
         const usersData = await fetchUsers();
         setUsers(usersData);
         setEditModalOpen(false);
@@ -69,11 +89,21 @@ const UserManagementComponent = () => {
   };
 
   const handleChange = (e) => {
-    setNewUser({ ...newUser, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setNewUser((prevUser) => ({ ...prevUser, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    setNewUser((prevUser) => ({ ...prevUser, img: e.target.files[0] }));
   };
 
   const handleEditChange = (e) => {
-    setCurrentUser({ ...currentUser, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setCurrentUser((prevUser) => ({ ...prevUser, [name]: value }));
+  };
+
+  const handleEditFileChange = (e) => {
+    setCurrentUser((prevUser) => ({ ...prevUser, img: e.target.files[0] }));
   };
 
   return (
@@ -82,9 +112,10 @@ const UserManagementComponent = () => {
         <TableHead>
           <TableRow>
             <TableCell>ID</TableCell>
-            <TableCell>Username</TableCell>
-            <TableCell>Role</TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell>{t('username')}</TableCell>
+            <TableCell>{t('email')}</TableCell>
+            <TableCell>{t('role')}</TableCell>
+            <TableCell>{t('actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -92,63 +123,86 @@ const UserManagementComponent = () => {
             <TableRow key={user.id}>
               <TableCell>{user.id}</TableCell>
               <TableCell>{user.username}</TableCell>
-              <TableCell>{user.role?.name || 'N/A'}</TableCell>
-              <TableCell>
-                <Button variant="contained" color="secondary" onClick={() => handleDeleteUser(user.id)}>Delete</Button>
-                <Button variant="contained" color="primary" onClick={() => handleOpenEditModal(user)} sx={{ ml: 1 }}>Edit</Button>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.role}</TableCell>
+              <TableCell align='center'>
+                <ButtonGroup orientation='vertical'>
+                  <Button fullWidth variant="contained" color="secondary" onClick={() => handleDeleteUser(user.id)}>{t('delete')}</Button>
+                  <Button fullWidth variant="contained" color="primary" onClick={() => handleOpenEditModal(user)} sx={{ ml: 1 }}>{t('edit')}</Button>
+                </ButtonGroup>
               </TableCell>
             </TableRow>
           ))}
           <TableRow>
             <TableCell colSpan={4}>
-              <Button fullWidth variant="contained" onClick={() => setModalOpen(true)} sx={{ backgroundColor: 'transparent', color: 'black', border: '1px dashed grey' }}>Add User</Button>
+              <Button fullWidth variant="contained" onClick={() => setModalOpen(true)} sx={{ backgroundColor: 'transparent', color: 'black', border: '1px dashed grey' }}>{t('add')} {t('user')}</Button>
             </TableCell>
           </TableRow>
         </TableBody>
       </Table>
 
       {/* Add User Modal */}
-      <Dialog open={modalOpen} onClose={() => setModalOpen(false)}>
-        <DialogTitle>Add User</DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        aria-labelledby="add-user-dialog-title"
+        aria-describedby="add-user-dialog-description"
+      >
+        <DialogTitle id="add-user-dialog-title">Add User</DialogTitle>
+        <DialogContent id="add-user-dialog-description">
           <TextField label="Username" name="username" value={newUser.username} onChange={handleChange} fullWidth margin="dense" />
-          <TextField label="Password" name="password" type="password" value={newUser.password} onChange={handleChange} fullWidth margin="dense" />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Role</InputLabel>
-            <Select name="roleId" value={newUser.roleId} onChange={handleChange}>
-              {roles.map((role) => (
-                <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField label="Email" name="email" value={newUser.email} onChange={handleChange} fullWidth margin="dense" />
+          <TextField label="Password" name="password" value={newUser.password} onChange={handleChange} fullWidth margin="dense" />
+          <input type="file" name="img" onChange={handleFileChange} accept="image/*" />
+          <Select
+            label="Role"
+            name="role"
+            value={newUser.role || ''}
+            onChange={handleChange}
+            fullWidth
+            margin="dense"
+          >
+            <MenuItem value="user">{t('user')}</MenuItem>
+            <MenuItem value="admin">{t('admin')}</MenuItem>
+          </Select>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleAddUser} color="primary">Add</Button>
+          <Button onClick={() => setModalOpen(false)}>{t('cancel')}</Button>
+          <Button onClick={handleAddUser} color="primary">{t('add')}</Button>
         </DialogActions>
       </Dialog>
 
       {/* Edit User Modal */}
-      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)}>
-        <DialogTitle>Edit User</DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        aria-labelledby="edit-user-dialog-title"
+        aria-describedby="edit-user-dialog-description"
+      >
+        <DialogTitle id="edit-user-dialog-title">{t('edit')} {t('user')}</DialogTitle>
+        <DialogContent id="edit-user-dialog-description">
           {currentUser && (
             <>
               <TextField label="Username" name="username" value={currentUser.username} onChange={handleEditChange} fullWidth margin="dense" />
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Role</InputLabel>
-                <Select name="roleId" value={currentUser.roleId} onChange={handleEditChange}>
-                  {roles.map((role) => (
-                    <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField label="Email" name="email" value={currentUser.email} onChange={handleEditChange} fullWidth margin="dense" />
+              <input type="file" name="img" onChange={handleEditFileChange} accept="image/*" />
+              <Select
+                label="Role"
+                name="role"
+                value={currentUser.role || ''}
+                onChange={handleEditChange}
+                fullWidth
+                margin="dense"
+              >
+                <MenuItem value="user">{t('user')}</MenuItem>
+                <MenuItem value="admin">{t('admin')}</MenuItem>
+              </Select>
             </>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleEditUser} color="primary">Save</Button>
+          <Button onClick={() => setEditModalOpen(false)}>{t('cancel')}</Button>
+          <Button onClick={handleEditUser} color="primary">{t('edit')}</Button>
         </DialogActions>
       </Dialog>
     </TableContainer>

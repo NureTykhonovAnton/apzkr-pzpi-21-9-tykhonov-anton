@@ -1,18 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { fetchEvacuations, createEvacuation, updateEvacuation, deleteEvacuation } from '../api/evacuationRequests';
+import {
+  fetchEvacuations,
+  createEvacuation,
+  updateEvacuation,
+  deleteEvacuation
+} from '../api/evacuationRequests';
 import { fetchZones } from '../api/zoneRequests';
 import { fetchCenters } from '../api/centerRequests';
-import { fetchEmergencies } from '../api/emergencyRequests';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  ButtonGroup
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const EvacuationManagementComponent = () => {
   const [evacuations, setEvacuations] = useState([]);
-  const [zones, setZones] = useState([]);
   const [centers, setCenters] = useState([]);
-  const [emergencies, setEmergencies] = useState([]);
+  const [zones, setZones] = useState([]);
   const [newEvacuation, setNewEvacuation] = useState({ zoneStart: '', centerEnd: '', emergencyId: '' });
   const [editEvacuation, setEditEvacuation] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const loadEvacuations = async () => {
@@ -42,19 +66,9 @@ const EvacuationManagementComponent = () => {
       }
     };
 
-    const loadEmergencies = async () => {
-      try {
-        const data = await fetchEmergencies();
-        setEmergencies(data);
-      } catch (error) {
-        console.error('Error fetching emergencies:', error);
-      }
-    };
-
     loadEvacuations();
     loadZones();
     loadCenters();
-    loadEmergencies();
   }, []);
 
   const handleCreateEvacuation = async () => {
@@ -62,14 +76,14 @@ const EvacuationManagementComponent = () => {
     try {
       const createdEvacuation = await createEvacuation(newEvacuation);
       setEvacuations([...evacuations, createdEvacuation]);
-      setNewEvacuation({ zoneStart: '', centerEnd: '', emergencyId: '' });
+      setNewEvacuation({ zoneStart: '', centerEnd: '', emergencyId: '' }); // Reset all fields
     } catch (error) {
       console.error('Error creating evacuation:', error);
     }
   };
 
   const handleUpdateEvacuation = async () => {
-    if (!editEvacuation || !editEvacuation.zoneStart || !editEvacuation.centerEnd || !editEvacuation.emergencyId) return;
+    if (!editEvacuation || !editEvacuation.zoneStart || !editEvacuation.centerEnd) return;
     try {
       const updated = await updateEvacuation(editEvacuation.id, editEvacuation);
       setEvacuations(evacuations.map(evacuation => (evacuation.id === editEvacuation.id ? updated : evacuation)));
@@ -96,7 +110,7 @@ const EvacuationManagementComponent = () => {
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditEvacuation({ ...editEvacuation, [name]: value });
+    setEditEvacuation(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -105,44 +119,44 @@ const EvacuationManagementComponent = () => {
         <TableHead>
           <TableRow>
             <TableCell>ID</TableCell>
-            <TableCell>Zone Start</TableCell>
-            <TableCell>Center End</TableCell>
-            <TableCell>Emergency</TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell>{t('zone')}</TableCell>
+            <TableCell>{t('center')}</TableCell>
+            <TableCell>{t('actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {evacuations.map(evacuation => (
             <TableRow key={evacuation.id}>
               <TableCell>{evacuation.id}</TableCell>
-              <TableCell>{zones.find(zone => zone.id === evacuation.zoneStart)?.name}</TableCell>
-              <TableCell>{centers.find(center => center.id === evacuation.centerEnd)?.name}</TableCell>
-              <TableCell>{emergencies.find(emergency => emergency.id === evacuation.emergencyId)?.name}</TableCell>
+              <TableCell>{evacuation.startZone?.name || 'N/A'}</TableCell>
+              <TableCell>{evacuation.endCenter?.name || 'N/A'}</TableCell>
               <TableCell>
-                <Button 
-                  aria-label="edit" 
-                  variant="contained" 
-                  color="secondary" 
-                  onClick={() => handleEditClick(evacuation)}
-                >
-                  Edit
-                </Button>
-                <Button 
-                  aria-label="delete" 
-                  variant="contained" 
-                  color="primary" 
-                  onClick={() => handleDeleteEvacuation(evacuation.id)}
-                  sx={{ ml: 1 }}
-                >
-                  Delete
-                </Button>
+                <ButtonGroup orientation='vertical'>
+                  <Button
+                    aria-label="edit"
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleEditClick(evacuation)}
+                  >
+                    {t('edit')}
+                  </Button>
+                  <Button
+                    aria-label="delete"
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleDeleteEvacuation(evacuation.id)}
+                    sx={{ ml: 1 }}
+                  >
+                    {t('delete')}
+                  </Button>
+                </ButtonGroup>
               </TableCell>
             </TableRow>
           ))}
           <TableRow>
             <TableCell colSpan={2}>
               <FormControl fullWidth>
-                <InputLabel>Zone Start</InputLabel>
+                <InputLabel>{t('zone')}</InputLabel>
                 <Select
                   name="zoneStart"
                   value={newEvacuation.zoneStart}
@@ -158,7 +172,7 @@ const EvacuationManagementComponent = () => {
             </TableCell>
             <TableCell>
               <FormControl fullWidth>
-                <InputLabel>Center End</InputLabel>
+                <InputLabel>{t('center')}</InputLabel>
                 <Select
                   name="centerEnd"
                   value={newEvacuation.centerEnd}
@@ -173,43 +187,27 @@ const EvacuationManagementComponent = () => {
               </FormControl>
             </TableCell>
             <TableCell>
-              <FormControl fullWidth>
-                <InputLabel>Emergency</InputLabel>
-                <Select
-                  name="emergencyId"
-                  value={newEvacuation.emergencyId}
-                  onChange={(e) => setNewEvacuation({ ...newEvacuation, emergencyId: e.target.value })}
-                >
-                  {emergencies.map(emergency => (
-                    <MenuItem key={emergency.id} value={emergency.id}>
-                      {emergency.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </TableCell>
-            <TableCell>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={handleCreateEvacuation}
               >
-                Create Evacuation
+                {t('create')}
               </Button>
             </TableCell>
           </TableRow>
         </TableBody>
       </Table>
-  
+
       {/* Edit Evacuation Dialog */}
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
-        <DialogTitle>Edit Evacuation</DialogTitle>
+        <DialogTitle>{t('edit')} {t('evacuation')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Update the details of the evacuation.
           </DialogContentText>
-          <FormControl fullWidth>
-            <InputLabel>Zone Start</InputLabel>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>{t('zone')}</InputLabel>
             <Select
               name="zoneStart"
               value={editEvacuation?.zoneStart || ''}
@@ -223,7 +221,7 @@ const EvacuationManagementComponent = () => {
             </Select>
           </FormControl>
           <FormControl fullWidth>
-            <InputLabel>Center End</InputLabel>
+            <InputLabel>{t('center')}</InputLabel>
             <Select
               name="centerEnd"
               value={editEvacuation?.centerEnd || ''}
@@ -236,31 +234,18 @@ const EvacuationManagementComponent = () => {
               ))}
             </Select>
           </FormControl>
-          <FormControl fullWidth>
-            <InputLabel>Emergency</InputLabel>
-            <Select
-              name="emergencyId"
-              value={editEvacuation?.emergencyId || ''}
-              onChange={handleEditChange}
-            >
-              {emergencies.map(emergency => (
-                <MenuItem key={emergency.id} value={emergency.id}>
-                  {emergency.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEditDialog(false)} color="secondary">
-            Cancel
+            {t('cancel')}
           </Button>
           <Button onClick={handleUpdateEvacuation} color="primary">
-            Update Evacuation
+            {t('update')}
           </Button>
         </DialogActions>
       </Dialog>
     </TableContainer>
   );
 }
+
 export default EvacuationManagementComponent;

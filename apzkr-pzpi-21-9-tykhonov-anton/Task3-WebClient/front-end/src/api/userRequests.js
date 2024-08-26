@@ -9,8 +9,10 @@ export const createUser = async (userData) => {
   try {
     const Udata = {
       username: userData.username,
+      email: userData.email,
       password: userData.password,
-      role: userData.role || 1,
+      img: userData.img || "",
+      role: userData.role || "user",
     };
     const response = await axiosInstance.post(API_USERS, Udata);
     return response.data;
