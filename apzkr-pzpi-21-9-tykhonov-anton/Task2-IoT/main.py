@@ -1,4 +1,5 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket
+from fastapi.websockets import WebSocketDisconnect
 import asyncio
 import websockets
 import json
@@ -15,28 +16,14 @@ async def forward_to_server(message: dict, uri: str):
         response = await websocket.recv()
         return response
 
-# Function to perform a ping-pong connection check
-async def ping_pong_check(websocket: WebSocket):
-    while True:
-        try:
-            await websocket.send_text(json.dumps({"type": "ping"}))
-            pong = await websocket.receive_text()
-            if json.loads(pong).get("type") != "pong":
-                raise WebSocketDisconnect
-            await asyncio.sleep(5)  # Ping every 5 seconds
-        except WebSocketDisconnect:
-            break
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     iot_id = None
-
-    # Start the ping-pong check in the background
-    ping_pong_task = asyncio.create_task(ping_pong_check(websocket))
     
     try:
         while True:
+            # Receive a message from the WebSocket
             data = await websocket.receive_text()
             message = json.loads(data)
             message_type = message.get("type")
@@ -66,8 +53,5 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"IoT device {iot_id} disconnected")
         if iot_id in iot_connections:
             del iot_connections[iot_id]
-    finally:
-        # Cancel the ping-pong check task when the connection is closed
-        ping_pong_task.cancel()
 
 # Run the server using: uvicorn filename:app --reload

@@ -17,13 +17,14 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Updated to 20x4 for larger display
 
 bool isWsConnected = false;
 bool isConfigReceived = false;
-bool isAlert = false; // Flag to indicate if configuration has been received
+bool isAlert = false; // flag for the state of the alert
 DynamicJsonDocument configData(1024); // To store the received configuration
 
 unsigned long previousMillis = 0; // Store the last time the message was sent
 const long interval = 5000; // Interval at which to send the message (milliseconds)
 
 float currentGas = 0.0; // Variable to store the current gas value
+float currentGasPrev = -1.0; // Initialize to an impossible value for the first comparison
 
 void setup() {
   Serial.begin(115200);
@@ -58,7 +59,7 @@ void setup() {
   lcd.print("WiFi!");
 
   // Connect to WebSocket server
-  webSocket.begin("host.wokwi.internal", 8080, "/ws");
+  webSocket.begin("host.wokwi.internal", 8080, "/ws");  // Updated port to 8000
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000); // Automatically try to reconnect every 5 seconds
 }
@@ -68,8 +69,19 @@ void loop() {
 
   int buttonState = digitalRead(BTN_PIN);
 
-  if (buttonState == LOW) { // Button pressed (assuming active-low button)
-    sendEmergencyAlert();
+  // Read the potentiometer value and map it to the range for gas level
+  int potValue = analogRead(POT_PIN);
+  currentGas = map(potValue, 0, 4095, 0, 100); // Map the potentiometer value (0-100)
+
+  // Print the gas value only if it has changed
+  if (currentGas != currentGasPrev) {
+    Serial.println(currentGas);
+    currentGasPrev = currentGas;
+  }
+
+  // Check if the gas value exceeds the limit or the button is pressed
+  if (isConfigReceived && (currentGas >= configData["gasLimit"].as<float>() || buttonState == LOW)) {
+    sendEmergencyAlert(); // Send emergency alert
     isAlert = true;
   } else {
     isAlert = false;
@@ -87,22 +99,11 @@ void loop() {
     lcd.clear();
   }
 
-  // Read the potentiometer value and map it to the range for gas level
-  int potValue = analogRead(POT_PIN);
-  currentGas = map(potValue, 0, 4095, 0, 100); // Map the potentiometer value (0-100)
-  Serial.println(currentGas);
-
-  // Check if currentGas exceeds gasLimit and send an alert if so
-  if (isConfigReceived && currentGas >= configData["gasLimit"].as<float>()) {
-      Serial.println(configData["gasLimit"]);
-    sendEmergencyAlert(); // Send emergency alert immediately if gas level is too high
-  }
-
   // Regular interval-based check
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    sendEmergencyAlert(); // Send emergency alert at regular intervals
+    // Do not send an alert unless necessary, handled above
   }
 }
 
@@ -124,10 +125,10 @@ void requestConfigurationValues() {
 void sendEmergencyAlert() {
   if (isConfigReceived && isWsConnected) {
     DynamicJsonDocument jsonDoc(1024); // Create a JSON document
-    jsonDoc["type"] = "emergency_alert"; // Emergency alert message type
+    jsonDoc["type"] = "emergencyAlert"; // Emergency alert message type
     jsonDoc["MACADDR"] = MAC_ADDR; // Add MAC address to JSON document
     jsonDoc["gasLimit"] = configData["gasLimit"];
-    jsonDoc["defaultZoneRadius"] = configData["defaultZoneRaduis"]; // Fix typo in the key name
+    jsonDoc["defaultZoneRaduis"] = configData["defaultZoneRaduis"]; // Fix typo in the key name
     jsonDoc["longitude"] = configData["longitude"];
     jsonDoc["latitude"] = configData["latitude"];
     jsonDoc["currentGas"] = currentGas; // Include the current gas value
@@ -164,7 +165,10 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       requestConfigurationValues();
       break;
     case WStype_TEXT:
-      Serial.printf("Received: %s\n", payload);
+      // Print the received message
+      Serial.print("Received message: ");
+      Serial.write(payload, length);
+      Serial.println();
 
       // Parse the received JSON message
       DynamicJsonDocument jsonDoc(1024);
