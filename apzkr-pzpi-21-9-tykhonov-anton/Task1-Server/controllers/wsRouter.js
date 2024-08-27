@@ -8,7 +8,6 @@ const User = require('../models/user');
 const IoTDevice = require('../models/iotDevice');
 const { checkIfUserWithinZone } = require('../middlewares/geolocationCheck');
 const WebSocket = require('ws');
-const { where } = require('sequelize');
 
 /**
  * Defines the handlers for different WebSocket message types.
@@ -78,7 +77,7 @@ const wsRouter = {
 
         try {
             // Find the IoT device by MACADDR
-            const foundIot = await IoTDevice.findOne({ where: { MACADDR } });
+            const foundIot = await IoTDevice.findOne({ where: { MACADDR:MACADDR } });
 
             if (foundIot) {
                 console.log(`IoT device with MACADDR: ${MACADDR} found!`);
@@ -101,40 +100,55 @@ const wsRouter = {
  * @async
  * @throws {Error} Throws error if Zone creation fails.
  */
-'emergencyAlert': async (data, connection) => {
-    console.log('Emergency alert received from IoT device!');
+    'emergencyAlert': async (data, connection) => {
+        console.log('Emergency alert received from IoT device!');
 
-    const { MACADDR } = data;
+        const requiredKeys = ['MACADDR'];
 
-    try {
-        // Find the IoT device by MACADDR
-        const foundIot = await IoTDevice.findOne({ where: { MACADDR } });
-
-        if (foundIot) {
-            console.log(`IoT device with MACADDR: ${MACADDR} found! Creating Zone...`);
-
-            // Create a new Zone based on the IoT device's parameters
-            const newZone = await Zone.create({
-                startedAt: new Date(),
-                emergencyTypeId: 1,
-                name: "IoT created Zone",
-                longitude: foundIot.longitude,
-                latitude: foundIot.latitude,
-                radius: foundIot.defaultZoneRaduis || 500, // Default to 100 if not specified
-            });
-
-            console.log('Zone successfully created:', newZone);
-            connection.send(JSON.stringify(newZone));
-        } else {
-            console.error('IoT device not found');
-            connection.send(JSON.stringify({ error: 'IoT device not found' }));
+        if (!validateIoTData(data, requiredKeys)) {
+            console.error('Missing or invalid data in emergencyAlert message');
+            connection.send(JSON.stringify({ error: 'Missing or invalid data in emergencyAlert message' }));
+            return;
         }
 
-    } catch (error) {
-        console.error('Error during emergency alert handling:', error);
-        connection.send(JSON.stringify({ error: 'Error during emergency alert handling' }));
-    }
-},
+        const { MACADDR } = data;
+
+        const foundIot = await IoTDevice.findOne({ where: { MACADDR:MACADDR } });
+        
+        // Additional validation
+        if (!isNumberInRange(foundIot.gasLimit, 0, 100) || !isNumberInRange(foundIot.longitude, -180, 180) || !isNumberInRange(foundIot.latitude, -90, 90)) {
+            console.error('Invalid gasLimit, longitude, or latitude values');
+            connection.send(JSON.stringify({ error: 'Invalid gasLimit, longitude, or latitude values' }));
+            return;
+        }
+
+        try {
+            const foundIot = await IoTDevice.findOne({ where: { MACADDR } });
+
+            if (foundIot) {
+                console.log(`IoT device with MACADDR: ${MACADDR} found! Creating Zone...`);
+
+                const newZone = await Zone.create({
+                    startedAt: new Date(),
+                    emergencyTypeId: 1,
+                    name: "IoT created Zone",
+                    longitude,
+                    latitude,
+                    radius: defaultZoneRaduis || 500,
+                });
+
+                console.log('Zone successfully created:', newZone);
+                connection.send(JSON.stringify(newZone));
+            } else {
+                console.error('IoT device not found');
+                connection.send(JSON.stringify({ error: 'IoT device not found' }));
+            }
+
+        } catch (error) {
+            console.error('Error during emergency alert handling:', error);
+            connection.send(JSON.stringify({ error: 'Error during emergency alert handling' }));
+        }
+    },
 };
 
 /**
